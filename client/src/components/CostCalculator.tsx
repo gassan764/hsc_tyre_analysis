@@ -193,7 +193,7 @@ export default function CostCalculator() {
         </div>
         {selectedSupplier === 2 && (
           <div className="mt-4 p-4 bg-red-100 dark:bg-red-900 rounded-lg border border-red-500">
-            <p className="text-sm font-semibold text-red-900 dark:text-red-100 mb-2">⚠️ High Risk Warning</p>
+            <p className="text-sm font-semibold text-red-900 dark:text-red-100 mb-2">High Risk Warning</p>
             <p className="text-sm text-red-900 dark:text-red-100">Parallel imports have voided warranties and risk of bead damage from "doubling" (compressing tyres to save freight). Not recommended for tanker operations.</p>
           </div>
         )}
@@ -257,7 +257,7 @@ export default function CostCalculator() {
             )}
             <div>
               <h5 className="font-semibold text-foreground mb-2">
-                {isProfitable ? 'Profitable ✓' : 'Not Profitable'}
+                {isProfitable ? 'Profitable' : 'Not Profitable'}
               </h5>
               <p className="text-sm text-muted-foreground mb-3">
                 {isProfitable
@@ -265,8 +265,8 @@ export default function CostCalculator() {
                   : 'Cost exceeds current supplier price'}
               </p>
               {meetsTarget && (
-                <div className="p-2 bg-green-100 dark:bg-green-900 rounded text-xs text-green-900 dark:text-green-100 font-medium">
-                  ✓ Meets 95 OMR target price for volume unlock
+                  <div className="p-2 bg-green-100 dark:bg-green-900 rounded text-xs text-green-900 dark:text-green-100 font-medium">
+                  Meets 95 OMR target price for volume unlock
                 </div>
               )}
             </div>
@@ -337,7 +337,7 @@ export default function CostCalculator() {
 
       {/* Important Notes */}
       <Card className="p-6 card-elevated bg-yellow-50 dark:bg-yellow-950 border-2 border-yellow-500">
-        <h4 className="font-semibold text-foreground mb-3">⚠️ Important Notes</h4>
+        <h4 className="font-semibold text-foreground mb-3">Important Notes</h4>
         <ul className="space-y-2 text-sm text-muted-foreground">
           <li>• <strong>Exchange Rate:</strong> 1 USD = 0.385 OMR (divide USD by 2.6 to get OMR)</li>
           <li>• <strong>Data Source:</strong> Verified Q4 2024 market research. All pricing is current.</li>

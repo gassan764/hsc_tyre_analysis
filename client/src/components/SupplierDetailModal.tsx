@@ -220,7 +220,7 @@ export function SupplierDetailModal({ isOpen, onClose, supplier }: SupplierDetai
             <ul className="space-y-2">
               {supplier.advantages.map((adv, idx) => (
                 <li key={idx} className="flex gap-2 text-sm text-muted-foreground">
-                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-green-600 font-bold">+</span>
                   {adv}
                 </li>
               ))}
@@ -236,7 +236,7 @@ export function SupplierDetailModal({ isOpen, onClose, supplier }: SupplierDetai
             <ul className="space-y-2">
               {supplier.disadvantages.map((dis, idx) => (
                 <li key={idx} className="flex gap-2 text-sm text-muted-foreground">
-                  <span className="text-red-600 font-bold">✗</span>
+                  <span className="text-red-600 font-bold">-</span>
                   {dis}
                 </li>
               ))}
@@ -308,7 +308,7 @@ export function SupplierCard({ supplier }: SupplierCardProps) {
             {supplier.risk} Risk
           </span>
         </div>
-        <p className="text-xs text-muted-foreground">Click to view details →</p>
+        <p className="text-xs text-muted-foreground">Click to view details</p>
       </Card>
 
       <SupplierDetailModal

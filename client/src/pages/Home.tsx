@@ -43,7 +43,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border-l-4 border-green-500">
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-3xl">✓</span>
+              <span className="text-3xl font-bold text-green-600">+</span>
               <h3 className="font-semibold text-foreground">Highly Profitable</h3>
             </div>
             <p className="text-sm text-muted-foreground">Triangle Direct: 82.93 OMR landed cost vs 115 OMR current</p>
@@ -51,7 +51,7 @@ export default function Home() {
 
           <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border-l-4 border-blue-500">
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-3xl">📈</span>
+              <span className="text-3xl font-bold text-blue-600">↑</span>
               <h3 className="font-semibold text-foreground">32K OMR Annual Savings</h3>
             </div>
             <p className="text-sm text-muted-foreground">At 1,000 units/year with Triangle supplier</p>
@@ -59,7 +59,7 @@ export default function Home() {
 
           <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border-l-4 border-purple-500">
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-3xl">🛡️</span>
+              <span className="text-3xl font-bold text-purple-600">✓</span>
               <h3 className="font-semibold text-foreground">Full Warranty</h3>
             </div>
             <p className="text-sm text-muted-foreground">Factory warranty from Triangle & Aeolus (not parallel imports)</p>
@@ -69,7 +69,7 @@ export default function Home() {
         {/* Info Banner */}
         <div className="bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-500 p-4 rounded-lg mb-8">
           <p className="text-sm text-blue-900 dark:text-blue-100">
-            <strong>ℹ️ Data Source:</strong> All pricing, shipping costs, and logistics data are verified from Q4 2024 market research. Adjust sliders to test different scenarios.
+            <strong>Data Source:</strong> All pricing, shipping costs, and logistics data are verified from Q4 2024 market research. Adjust sliders to test different scenarios.
           </p>
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function Home() {
 
               {/* Critical Notes */}
               <div className="mt-8 p-4 bg-yellow-50 dark:bg-yellow-950 border-l-4 border-yellow-500 rounded">
-                <h5 className="font-semibold text-foreground mb-3">⚠️ Critical Success Factors</h5>
+                <h5 className="font-semibold text-foreground mb-3">Critical Success Factors</h5>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li>• <strong>Never allow "doubling":</strong> Tyres must be interlaced normally. Compressed tyres have bead damage.</li>
                   <li>• <strong>GSO Certification:</strong> All tyres must have GSO certificate for GCC compliance.</li>
