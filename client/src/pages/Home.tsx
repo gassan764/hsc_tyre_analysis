@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import CostCalculator from '@/components/CostCalculator';
-import { TrendingUp, DollarSign, Package, AlertCircle, CheckCircle, ArrowRight, Mail, Phone } from 'lucide-react';
+import CostBreakdownChart from '@/components/CostBreakdownChart';
+import ScenarioComparisonChart from '@/components/ScenarioComparisonChart';
+import ProfitabilityHeatmap from '@/components/ProfitabilityHeatmap';
+import BreakEvenAnalysis from '@/components/BreakEvenAnalysis';
+import { TrendingUp, DollarSign, Package, AlertCircle, CheckCircle, ArrowRight, Mail, Phone, BarChart3 } from 'lucide-react';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('calculator');
@@ -69,14 +73,44 @@ export default function Home() {
               </p>
             </div>
             <CostCalculator />
+            
+            {/* Visualization Section */}
+            <div className="mt-12 pt-8 border-t border-border">
+              <h3 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
+                <BarChart3 className="w-6 h-6 text-primary" />
+                Data Visualizations
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Comprehensive charts and analysis to support your sourcing decision.
+              </p>
+            </div>
+            
+            {/* Cost Breakdown Chart */}
+            <CostBreakdownChart
+              factoryPrice={80}
+              insurance={0.8}
+              shipping={0.3}
+              customsDuty={4.06}
+              vat={4.25}
+              handling={0.18}
+            />
+            
+            {/* Scenario Comparison */}
+            <ScenarioComparisonChart />
+            
+            {/* Profitability Heatmap */}
+            <ProfitabilityHeatmap />
+            
+            {/* Break-Even Analysis */}
+            <BreakEvenAnalysis />
           </TabsContent>
 
           {/* Analysis Tab */}
           <TabsContent value="analysis" className="space-y-8">
             <div>
-              <h3 className="text-2xl font-bold text-foreground mb-2">Scenario Analysis</h3>
+              <h3 className="text-2xl font-bold text-foreground mb-2">Detailed Scenario Analysis</h3>
               <p className="text-muted-foreground mb-6">
-                Detailed breakdown of three key scenarios for HSC's tyre sourcing strategy.
+                Comprehensive breakdown of three key scenarios for HSC's tyre sourcing strategy with supporting visualizations.
               </p>
             </div>
 
@@ -210,6 +244,9 @@ export default function Home() {
               </div>
             </Card>
 
+            {/* Scenario Comparison Visualization */}
+            <ScenarioComparisonChart />
+            
             {/* Cost Comparison Table */}
             <Card className="p-8 card-elevated">
               <h4 className="text-xl font-semibold text-foreground mb-6">Cost Comparison: Current Supplier vs. Direct Import</h4>
@@ -254,6 +291,12 @@ export default function Home() {
                 </table>
               </div>
             </Card>
+            
+            {/* Profitability Heatmap */}
+            <ProfitabilityHeatmap />
+            
+            {/* Break-Even Analysis */}
+            <BreakEvenAnalysis />
           </TabsContent>
 
           {/* Contact Tab */}
