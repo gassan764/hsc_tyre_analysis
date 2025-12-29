@@ -1,22 +1,26 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
-import { AlertCircle, CheckCircle, TrendingDown, AlertTriangle } from 'lucide-react';
+import { AlertCircle, CheckCircle, TrendingDown } from 'lucide-react';
 
 export default function CostCalculator() {
-  // Verified data from research report (Q4 2024)
-  const EXCHANGE_RATE = 0.385; // 1 OMR = 0.385 USD (or 1 USD = 2.6 OMR)
-  const CURRENT_PRICE_OMR = 115; // Current supplier (Saud Bahwan/Westlake)
+  // Exchange rate: 1 OMR = 0.385 USD (or 1 USD = 2.6 OMR)
+  const OMR_TO_USD = 0.385;
+  const USD_TO_OMR = 1 / OMR_TO_USD; // 2.6
 
-  // Verified logistics costs
+  // Current supplier price
+  const CURRENT_PRICE_OMR = 115;
+
+  // Verified logistics costs (in USD)
   const OCEAN_FREIGHT_USD = 2500; // Per 40ft HC container
-  const CONTAINER_CAPACITY = 230; // Tyres per container (normal loading, no doubling)
-  const PORT_HANDLING_OMR = 150; // Per container
-  const CLEARANCE_OMR = 100; // Per container
-  const LOCAL_TRANSPORT_OMR = 100; // Per container
+  const CONTAINER_CAPACITY = 230; // Tyres per container
 
-  // Verified supplier scenarios from research report
+  // Fixed costs per container (in OMR)
+  const PORT_HANDLING_OMR = 150;
+  const CLEARANCE_OMR = 100;
+  const LOCAL_TRANSPORT_OMR = 100;
+
+  // Verified supplier scenarios
   const suppliers = [
     {
       name: 'Triangle Tyre (Recommended)',
@@ -54,59 +58,69 @@ export default function CostCalculator() {
   ];
 
   const [selectedSupplier, setSelectedSupplier] = useState(0);
-  const [factoryPrice, setFactoryPrice] = useState(
+  const [factoryPriceUSD, setFactoryPriceUSD] = useState(
     (suppliers[0].fobMin + suppliers[0].fobMax) / 2
   );
   const [annualVolume, setAnnualVolume] = useState(1000);
 
-  // Calculate landed cost
-  const calculateLandedCost = (fobPrice: number, volume: number) => {
-    const insurance = fobPrice * 0.01; // 1% of FOB
-    const cifValue = fobPrice + insurance;
-    const cifValueOMR = cifValue * EXCHANGE_RATE;
+  // Calculate landed cost - ALL in USD first, then convert to OMR
+  const calculateLandedCost = (fobUSD: number, volume: number) => {
+    // FOB and Insurance (USD)
+    const insuranceUSD = fobUSD * 0.01; // 1% of FOB
+    const cifUSD = fobUSD + insuranceUSD;
 
-    const shippingPerTyre = (OCEAN_FREIGHT_USD / CONTAINER_CAPACITY) / (1 / EXCHANGE_RATE);
-    const portHandlingPerTyre = PORT_HANDLING_OMR / CONTAINER_CAPACITY;
-    const clearancePerTyre = CLEARANCE_OMR / CONTAINER_CAPACITY;
-    const transportPerTyre = LOCAL_TRANSPORT_OMR / CONTAINER_CAPACITY;
+    // Shipping per tyre (USD)
+    const shippingPerTyreUSD = OCEAN_FREIGHT_USD / CONTAINER_CAPACITY;
 
-    const customsDuty = cifValueOMR * 0.05; // 5% on CIF
-    const vat = (cifValueOMR + customsDuty) * 0.05; // 5% on CIF + duty
+    // Customs duty and VAT (calculated on CIF value in OMR)
+    const cifOMR = cifUSD * USD_TO_OMR;
+    const customsDutyOMR = cifOMR * 0.05; // 5% on CIF
+    const vatOMR = (cifOMR + customsDutyOMR) * 0.05; // 5% on CIF + duty
 
+    // Port handling and clearance per tyre (OMR)
+    const portHandlingPerTyreOMR = PORT_HANDLING_OMR / CONTAINER_CAPACITY;
+    const clearancePerTyreOMR = CLEARANCE_OMR / CONTAINER_CAPACITY;
+    const transportPerTyreOMR = LOCAL_TRANSPORT_OMR / CONTAINER_CAPACITY;
+
+    // Total landed cost in OMR
     const totalLandedCostOMR =
-      (cifValue / EXCHANGE_RATE) +
-      (customsDuty / EXCHANGE_RATE) +
-      (vat / EXCHANGE_RATE) +
-      shippingPerTyre +
-      portHandlingPerTyre +
-      clearancePerTyre +
-      transportPerTyre;
+      cifOMR + // FOB + Insurance in OMR
+      customsDutyOMR +
+      vatOMR +
+      shippingPerTyreUSD * USD_TO_OMR + // Shipping in OMR
+      portHandlingPerTyreOMR +
+      clearancePerTyreOMR +
+      transportPerTyreOMR;
+
+    // Convert back to USD for display
+    const totalLandedCostUSD = totalLandedCostOMR * OMR_TO_USD;
 
     return {
-      fobUSD: fobPrice,
-      fobOMR: fobPrice * EXCHANGE_RATE,
-      insurance,
-      shipping: shippingPerTyre,
-      customsDuty: customsDuty / CONTAINER_CAPACITY,
-      vat: vat / CONTAINER_CAPACITY,
-      portHandling: portHandlingPerTyre,
-      clearance: clearancePerTyre,
-      transport: transportPerTyre,
+      fobUSD,
+      fobOMR: fobUSD * USD_TO_OMR,
+      insuranceUSD,
+      insuranceOMR: insuranceUSD * USD_TO_OMR,
+      shippingUSD: shippingPerTyreUSD,
+      shippingOMR: shippingPerTyreUSD * USD_TO_OMR,
+      customsDutyOMR,
+      vatOMR,
+      portHandlingOMR: portHandlingPerTyreOMR,
+      clearanceOMR: clearancePerTyreOMR,
+      transportOMR: transportPerTyreOMR,
       totalLandedCostOMR,
-      totalLandedCostUSD: totalLandedCostOMR / EXCHANGE_RATE,
-      savingsPerTyre: CURRENT_PRICE_OMR - totalLandedCostOMR,
-      annualSavings: (CURRENT_PRICE_OMR - totalLandedCostOMR) * volume,
+      totalLandedCostUSD,
+      savingsPerTyreOMR: CURRENT_PRICE_OMR - totalLandedCostOMR,
+      savingsPerTyreUSD: (CURRENT_PRICE_OMR * OMR_TO_USD) - totalLandedCostUSD,
+      annualSavingsOMR: (CURRENT_PRICE_OMR - totalLandedCostOMR) * volume,
+      annualSavingsUSD: ((CURRENT_PRICE_OMR * OMR_TO_USD) - totalLandedCostUSD) * volume,
     };
   };
 
   const supplier = suppliers[selectedSupplier];
-  const costs = calculateLandedCost(factoryPrice, annualVolume);
-  const isProfitable = costs.savingsPerTyre > 0;
+  const costs = calculateLandedCost(factoryPriceUSD, annualVolume);
+  const isProfitable = costs.savingsPerTyreOMR > 0;
   const targetPrice = 95; // HSC's target to unlock volume growth
   const meetsTarget = costs.totalLandedCostOMR <= targetPrice;
-
-  // Helper function to convert USD to OMR
-  const usdToOmr = (usd: number) => usd / EXCHANGE_RATE;
 
   return (
     <div className="space-y-8">
@@ -119,7 +133,7 @@ export default function CostCalculator() {
               key={idx}
               onClick={() => {
                 setSelectedSupplier(idx);
-                setFactoryPrice((sup.fobMin + sup.fobMax) / 2);
+                setFactoryPriceUSD((sup.fobMin + sup.fobMax) / 2);
               }}
               className={`p-4 rounded-lg border-2 transition-all text-left ${
                 selectedSupplier === idx
@@ -170,6 +184,7 @@ export default function CostCalculator() {
           </div>
         )}
       </Card>
+
       {/* Calculator Controls */}
       <Card className="p-6 card-elevated">
         <h4 className="text-lg font-semibold text-foreground mb-6">Adjust Parameters</h4>
@@ -179,15 +194,15 @@ export default function CostCalculator() {
             <div className="flex items-center justify-between mb-3">
               <label className="text-sm font-medium text-foreground">Factory Price (FOB USD)</label>
               <div className="text-right">
-                <p className="text-2xl font-bold text-primary">${factoryPrice.toFixed(0)}</p>
+                <p className="text-2xl font-bold text-primary">${factoryPriceUSD.toFixed(0)}</p>
                 <p className="text-xs text-muted-foreground">
                   {supplier.fobMin}-{supplier.fobMax} range
                 </p>
               </div>
             </div>
             <Slider
-              value={[factoryPrice]}
-              onValueChange={(val) => setFactoryPrice(val[0])}
+              value={[factoryPriceUSD]}
+              onValueChange={(val) => setFactoryPriceUSD(val[0])}
               min={supplier.fobMin}
               max={supplier.fobMax}
               step={5}
@@ -232,7 +247,7 @@ export default function CostCalculator() {
               </h5>
               <p className="text-sm text-muted-foreground mb-3">
                 {isProfitable
-                  ? `Each tyre saves ${costs.savingsPerTyre.toFixed(2)} OMR vs current supplier`
+                  ? `Each tyre saves ${costs.savingsPerTyreOMR.toFixed(2)} OMR (${costs.savingsPerTyreUSD.toFixed(2)} USD)`
                   : 'Cost exceeds current supplier price'}
               </p>
               {meetsTarget && (
@@ -251,10 +266,10 @@ export default function CostCalculator() {
             <div>
               <h5 className="font-semibold text-foreground mb-2">Annual Savings</h5>
               <p className="text-3xl font-bold text-primary mb-1">
-                {(costs.annualSavings / 1000).toFixed(0)}K OMR
+                {(costs.annualSavingsOMR / 1000).toFixed(0)}K OMR
               </p>
               <p className="text-sm text-muted-foreground">
-                At {annualVolume.toLocaleString()} tyres/year
+                ${(costs.annualSavingsUSD / 1000).toFixed(0)}K USD at {annualVolume.toLocaleString()} tyres/year
               </p>
             </div>
           </div>
@@ -267,41 +282,41 @@ export default function CostCalculator() {
         <div className="space-y-3">
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">Factory Price (FOB)</span>
-            <span className="font-semibold">${costs.fobUSD.toFixed(2)} ({(costs.fobUSD / EXCHANGE_RATE).toFixed(2)} OMR)</span>
+            <span className="font-semibold">${costs.fobUSD.toFixed(2)} / {costs.fobOMR.toFixed(2)} OMR</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">Insurance (1%)</span>
-            <span className="font-semibold">${costs.insurance.toFixed(2)} ({(costs.insurance / EXCHANGE_RATE).toFixed(2)} OMR)</span>
+            <span className="font-semibold">${costs.insuranceUSD.toFixed(2)} / {costs.insuranceOMR.toFixed(2)} OMR</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">Ocean Freight</span>
-            <span className="font-semibold">{(costs.shipping).toFixed(2)} OMR (${(costs.shipping * EXCHANGE_RATE).toFixed(2)})</span>
+            <span className="font-semibold">${costs.shippingUSD.toFixed(2)} / {costs.shippingOMR.toFixed(2)} OMR</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">Customs Duty (5%)</span>
-            <span className="font-semibold">{(costs.customsDuty).toFixed(2)} OMR (${(costs.customsDuty * EXCHANGE_RATE).toFixed(2)})</span>
+            <span className="font-semibold">{costs.customsDutyOMR.toFixed(2)} OMR</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">VAT (5%)</span>
-            <span className="font-semibold">{(costs.vat).toFixed(2)} OMR (${(costs.vat * EXCHANGE_RATE).toFixed(2)})</span>
+            <span className="font-semibold">{costs.vatOMR.toFixed(2)} OMR</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">Port Handling & Clearance</span>
-            <span className="font-semibold">{(costs.portHandling + costs.clearance).toFixed(2)} OMR (${((costs.portHandling + costs.clearance) * EXCHANGE_RATE).toFixed(2)})</span>
+            <span className="font-semibold">{(costs.portHandlingOMR + costs.clearanceOMR).toFixed(2)} OMR</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">Local Transport</span>
-            <span className="font-semibold">{(costs.transport).toFixed(2)} OMR (${(costs.transport * EXCHANGE_RATE).toFixed(2)})</span>
+            <span className="font-semibold">{costs.transportOMR.toFixed(2)} OMR</span>
           </div>
           <div className="border-t border-border pt-3 mt-3">
             <div className="flex justify-between items-center p-3 bg-primary text-primary-foreground rounded font-semibold">
               <span>Total Landed Cost</span>
-              <span>{costs.totalLandedCostOMR.toFixed(2)} OMR (${(costs.totalLandedCostOMR * EXCHANGE_RATE).toFixed(2)})</span>
+              <span>{costs.totalLandedCostOMR.toFixed(2)} OMR / ${costs.totalLandedCostUSD.toFixed(2)}</span>
             </div>
           </div>
           <div className="flex justify-between items-center p-3 bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100 rounded font-semibold">
             <span>Savings vs Current (115 OMR)</span>
-            <span>+{costs.savingsPerTyre.toFixed(2)} OMR/tyre</span>
+            <span>+{costs.savingsPerTyreOMR.toFixed(2)} OMR / +${costs.savingsPerTyreUSD.toFixed(2)}</span>
           </div>
         </div>
       </Card>
@@ -310,11 +325,12 @@ export default function CostCalculator() {
       <Card className="p-6 card-elevated bg-yellow-50 dark:bg-yellow-950 border-2 border-yellow-500">
         <h4 className="font-semibold text-foreground mb-3">⚠️ Important Notes</h4>
         <ul className="space-y-2 text-sm text-muted-foreground">
-          <li>• <strong>Data Source:</strong> Verified Q4 2024 market research. Shipping rates and supplier pricing are current.</li>
-          <li>• <strong>Container Capacity:</strong> 230 tyres assumes normal interlaced loading. NEVER allow "doubling" (compression) as it damages bead integrity.</li>
-          <li>• <strong>Westlake Direct:</strong> Contractually blocked by Oman's Commercial Agencies Law. Triangle is the recommended alternative.</li>
-          <li>• <strong>Pilot Phase:</strong> Start with 1 container (230 units) to validate quality and logistics before scaling to 1,000+ units/year.</li>
-          <li>• <strong>GSO Certification:</strong> Mandatory for all tyres entering GCC countries. Verify certificates before transferring deposit.</li>
+          <li>• <strong>Exchange Rate:</strong> 1 OMR = 0.385 USD (1 USD = 2.6 OMR)</li>
+          <li>• <strong>Data Source:</strong> Verified Q4 2024 market research. All pricing is current.</li>
+          <li>• <strong>Container Capacity:</strong> 230 tyres assumes normal interlaced loading. NEVER allow "doubling".</li>
+          <li>• <strong>Westlake Direct:</strong> Contractually blocked by Oman's Commercial Agencies Law. Triangle is recommended.</li>
+          <li>• <strong>Pilot Phase:</strong> Start with 1 container (230 units) to validate quality before scaling.</li>
+          <li>• <strong>GSO Certification:</strong> Mandatory for all tyres entering GCC countries.</li>
         </ul>
       </Card>
     </div>
