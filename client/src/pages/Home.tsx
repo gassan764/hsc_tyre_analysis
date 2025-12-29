@@ -5,6 +5,7 @@ import CostBreakdownChart from '@/components/CostBreakdownChart';
 import ScenarioComparisonChart from '@/components/ScenarioComparisonChart';
 import ProfitabilityHeatmap from '@/components/ProfitabilityHeatmap';
 import { SupplierGallery } from '@/components/SupplierDetailModal';
+import LegalAndQualityInfo from '@/components/LegalAndQualityInfo';
 
 export default function Home() {
   const [selectedSupplierData, setSelectedSupplierData] = useState({
@@ -77,11 +78,12 @@ export default function Home() {
       {/* Main Content */}
       <div className="container mx-auto px-4 pb-12">
         <Tabs defaultValue="calculator" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-white dark:bg-slate-800 p-1 rounded-lg shadow-md mb-8">
+          <TabsList className="grid w-full grid-cols-5 bg-white dark:bg-slate-800 p-1 rounded-lg shadow-md mb-8">
             <TabsTrigger value="calculator" className="text-sm md:text-base">Calculator</TabsTrigger>
             <TabsTrigger value="analysis" className="text-sm md:text-base">Analysis</TabsTrigger>
             <TabsTrigger value="suppliers" className="text-sm md:text-base">Suppliers</TabsTrigger>
             <TabsTrigger value="roadmap" className="text-sm md:text-base">Roadmap</TabsTrigger>
+            <TabsTrigger value="legal" className="text-sm md:text-base">Legal & Quality</TabsTrigger>
           </TabsList>
 
           {/* Calculator Tab */}
@@ -182,6 +184,11 @@ export default function Home() {
                 </ul>
               </div>
             </div>
+          </TabsContent>
+
+          {/* Legal & Quality Tab */}
+          <TabsContent value="legal" className="space-y-6">
+            <LegalAndQualityInfo />
           </TabsContent>
         </Tabs>
       </div>
