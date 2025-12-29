@@ -4,8 +4,9 @@ import { Slider } from '@/components/ui/slider';
 import { AlertCircle, CheckCircle, TrendingDown } from 'lucide-react';
 
 export default function CostCalculator() {
-  // EXCHANGE RATE: 1 USD = 2.6 OMR (verified)
-  const USD_TO_OMR = 2.6;
+  // CORRECT EXCHANGE RATE: 1 USD = 0.385 OMR (divide USD by 2.6 to get OMR)
+  const USD_TO_OMR_RATE = 0.385; // 1 USD = 0.385 OMR
+  const OMR_TO_USD_RATE = 1 / USD_TO_OMR_RATE; // 1 OMR = 2.6 USD
 
   // Current supplier price
   const CURRENT_PRICE_OMR = 115;
@@ -62,17 +63,17 @@ export default function CostCalculator() {
   );
   const [annualVolume, setAnnualVolume] = useState(1000);
 
-  // Calculate landed cost - SIMPLE AND CLEAR
+  // Calculate landed cost - CORRECT LOGIC
   const calculateLandedCost = (fobUSD: number, volume: number) => {
     // Step 1: FOB and Insurance (USD)
     const insuranceUSD = fobUSD * 0.01; // 1% of FOB
     const cifUSD = fobUSD + insuranceUSD;
 
-    // Step 2: Shipping per tyre (USD) - divide total by container capacity
+    // Step 2: Shipping per tyre (USD)
     const shippingPerTyreUSD = OCEAN_FREIGHT_USD / CONTAINER_CAPACITY;
 
-    // Step 3: Convert CIF to OMR for duty/VAT calculation
-    const cifOMR = cifUSD * USD_TO_OMR;
+    // Step 3: Convert to OMR for duty/VAT calculation
+    const cifOMR = cifUSD * USD_TO_OMR_RATE; // Divide by 2.6 implicitly (0.385 rate)
 
     // Step 4: Customs duty and VAT (calculated on CIF value)
     const customsDutyOMR = cifOMR * 0.05; // 5% on CIF
@@ -84,12 +85,12 @@ export default function CostCalculator() {
     const transportPerTyreOMR = LOCAL_TRANSPORT_OMR / CONTAINER_CAPACITY;
 
     // Step 6: Total landed cost in OMR
-    // All USD components converted to OMR, plus OMR components
+    const shippingPerTyreOMR = shippingPerTyreUSD * USD_TO_OMR_RATE;
     const totalLandedCostOMR =
       cifOMR + // FOB + Insurance converted to OMR
       customsDutyOMR +
       vatOMR +
-      shippingPerTyreUSD * USD_TO_OMR + // Shipping converted to OMR
+      shippingPerTyreOMR +
       portHandlingPerTyreOMR +
       clearancePerTyreOMR +
       transportPerTyreOMR;
@@ -100,13 +101,13 @@ export default function CostCalculator() {
     return {
       // FOB and Insurance (in both currencies)
       fobUSD,
-      fobOMR: fobUSD * USD_TO_OMR,
+      fobOMR: fobUSD * USD_TO_OMR_RATE,
       insuranceUSD,
-      insuranceOMR: insuranceUSD * USD_TO_OMR,
+      insuranceOMR: insuranceUSD * USD_TO_OMR_RATE,
 
       // Shipping per tyre (in both currencies)
       shippingUSD: shippingPerTyreUSD,
-      shippingOMR: shippingPerTyreUSD * USD_TO_OMR,
+      shippingOMR: shippingPerTyreOMR,
 
       // Duties and taxes (in OMR)
       customsDutyOMR,
@@ -119,13 +120,13 @@ export default function CostCalculator() {
 
       // Total landed cost
       totalLandedCostOMR,
-      totalLandedCostUSD: totalLandedCostOMR / USD_TO_OMR,
+      totalLandedCostUSD: totalLandedCostOMR * OMR_TO_USD_RATE,
 
       // Savings
       savingsPerTyreOMR,
-      savingsPerTyreUSD: savingsPerTyreOMR / USD_TO_OMR,
+      savingsPerTyreUSD: savingsPerTyreOMR * OMR_TO_USD_RATE,
       annualSavingsOMR: savingsPerTyreOMR * volume,
-      annualSavingsUSD: (savingsPerTyreOMR / USD_TO_OMR) * volume,
+      annualSavingsUSD: (savingsPerTyreOMR * OMR_TO_USD_RATE) * volume,
     };
   };
 
@@ -338,7 +339,7 @@ export default function CostCalculator() {
       <Card className="p-6 card-elevated bg-yellow-50 dark:bg-yellow-950 border-2 border-yellow-500">
         <h4 className="font-semibold text-foreground mb-3">⚠️ Important Notes</h4>
         <ul className="space-y-2 text-sm text-muted-foreground">
-          <li>• <strong>Exchange Rate:</strong> 1 USD = 2.6 OMR (verified)</li>
+          <li>• <strong>Exchange Rate:</strong> 1 USD = 0.385 OMR (divide USD by 2.6 to get OMR)</li>
           <li>• <strong>Data Source:</strong> Verified Q4 2024 market research. All pricing is current.</li>
           <li>• <strong>Container Capacity:</strong> 230 tyres assumes normal interlaced loading. NEVER allow "doubling".</li>
           <li>• <strong>Westlake Direct:</strong> Contractually blocked by Oman's Commercial Agencies Law. Triangle is recommended.</li>
