@@ -6,7 +6,7 @@ import { AlertCircle, CheckCircle, TrendingDown, AlertTriangle } from 'lucide-re
 
 export default function CostCalculator() {
   // Verified data from research report (Q4 2024)
-  const EXCHANGE_RATE = 2.6; // 1 USD = 2.6 OMR
+  const EXCHANGE_RATE = 0.385; // 1 OMR = 0.385 USD (or 1 USD = 2.6 OMR)
   const CURRENT_PRICE_OMR = 115; // Current supplier (Saud Bahwan/Westlake)
 
   // Verified logistics costs
@@ -65,7 +65,7 @@ export default function CostCalculator() {
     const cifValue = fobPrice + insurance;
     const cifValueOMR = cifValue * EXCHANGE_RATE;
 
-    const shippingPerTyre = (OCEAN_FREIGHT_USD / CONTAINER_CAPACITY) * EXCHANGE_RATE;
+    const shippingPerTyre = (OCEAN_FREIGHT_USD / CONTAINER_CAPACITY) / (1 / EXCHANGE_RATE);
     const portHandlingPerTyre = PORT_HANDLING_OMR / CONTAINER_CAPACITY;
     const clearancePerTyre = CLEARANCE_OMR / CONTAINER_CAPACITY;
     const transportPerTyre = LOCAL_TRANSPORT_OMR / CONTAINER_CAPACITY;
@@ -74,9 +74,9 @@ export default function CostCalculator() {
     const vat = (cifValueOMR + customsDuty) * 0.05; // 5% on CIF + duty
 
     const totalLandedCostOMR =
-      cifValueOMR +
-      customsDuty +
-      vat +
+      (cifValue / EXCHANGE_RATE) +
+      (customsDuty / EXCHANGE_RATE) +
+      (vat / EXCHANGE_RATE) +
       shippingPerTyre +
       portHandlingPerTyre +
       clearancePerTyre +
@@ -104,6 +104,9 @@ export default function CostCalculator() {
   const isProfitable = costs.savingsPerTyre > 0;
   const targetPrice = 95; // HSC's target to unlock volume growth
   const meetsTarget = costs.totalLandedCostOMR <= targetPrice;
+
+  // Helper function to convert USD to OMR
+  const usdToOmr = (usd: number) => usd / EXCHANGE_RATE;
 
   return (
     <div className="space-y-8">
@@ -137,40 +140,36 @@ export default function CostCalculator() {
 
       {/* Supplier Details */}
       <Card className={`p-6 card-elevated border-2 ${supplier.color}`}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="text-lg font-semibold text-foreground mb-4">{supplier.name}</h4>
-            <div className="space-y-3 text-sm">
-              <div>
-                <p className="text-muted-foreground">Model</p>
-                <p className="font-semibold text-foreground">{supplier.model}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Warranty</p>
-                <p className="font-semibold text-foreground">{supplier.warranty}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Contact</p>
-                <p className="font-semibold text-foreground text-xs break-all">{supplier.contact}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Key Advantage</p>
-                <p className="font-semibold text-foreground">{supplier.advantage}</p>
-              </div>
-            </div>
+        <h4 className="text-lg font-semibold text-foreground mb-6">{supplier.name}</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 bg-background dark:bg-slate-900 rounded-lg">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Model</p>
+            <p className="font-semibold text-foreground text-sm">{supplier.model}</p>
           </div>
-          <div className="bg-background dark:bg-slate-900 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-2">Risk Assessment</p>
-            <p className="font-semibold text-foreground mb-3">{supplier.risk}</p>
-            {selectedSupplier === 2 && (
-              <div className="p-3 bg-red-100 dark:bg-red-900 rounded text-xs text-red-900 dark:text-red-100">
-                ⚠️ <strong>Warning:</strong> Parallel imports have voided warranties and risk of bead damage from "doubling" (compressing tyres to save freight). Not recommended for tanker operations.
-              </div>
-            )}
+          <div className="p-4 bg-background dark:bg-slate-900 rounded-lg">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Warranty</p>
+            <p className="font-semibold text-foreground text-sm">{supplier.warranty}</p>
+          </div>
+          <div className="p-4 bg-background dark:bg-slate-900 rounded-lg">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Risk Level</p>
+            <p className="font-semibold text-foreground text-sm">{supplier.risk}</p>
+          </div>
+          <div className="p-4 bg-background dark:bg-slate-900 rounded-lg">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Contact</p>
+            <p className="font-semibold text-foreground text-xs break-all">{supplier.contact}</p>
           </div>
         </div>
+        <div className="mt-4 p-4 bg-background dark:bg-slate-900 rounded-lg">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Key Advantage</p>
+          <p className="font-semibold text-foreground">{supplier.advantage}</p>
+        </div>
+        {selectedSupplier === 2 && (
+          <div className="mt-4 p-4 bg-red-100 dark:bg-red-900 rounded-lg border border-red-500">
+            <p className="text-sm font-semibold text-red-900 dark:text-red-100 mb-2">⚠️ High Risk Warning</p>
+            <p className="text-sm text-red-900 dark:text-red-100">Parallel imports have voided warranties and risk of bead damage from "doubling" (compressing tyres to save freight). Not recommended for tanker operations.</p>
+          </div>
+        )}
       </Card>
-
       {/* Calculator Controls */}
       <Card className="p-6 card-elevated">
         <h4 className="text-lg font-semibold text-foreground mb-6">Adjust Parameters</h4>
@@ -268,36 +267,36 @@ export default function CostCalculator() {
         <div className="space-y-3">
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">Factory Price (FOB)</span>
-            <span className="font-semibold">${costs.fobUSD.toFixed(2)} ({(costs.fobOMR).toFixed(2)} OMR)</span>
+            <span className="font-semibold">${costs.fobUSD.toFixed(2)} ({(costs.fobUSD / EXCHANGE_RATE).toFixed(2)} OMR)</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">Insurance (1%)</span>
-            <span className="font-semibold">${costs.insurance.toFixed(2)}</span>
+            <span className="font-semibold">${costs.insurance.toFixed(2)} ({(costs.insurance / EXCHANGE_RATE).toFixed(2)} OMR)</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">Ocean Freight</span>
-            <span className="font-semibold">{(costs.shipping).toFixed(2)} OMR</span>
+            <span className="font-semibold">{(costs.shipping).toFixed(2)} OMR (${(costs.shipping * EXCHANGE_RATE).toFixed(2)})</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">Customs Duty (5%)</span>
-            <span className="font-semibold">{(costs.customsDuty).toFixed(2)} OMR</span>
+            <span className="font-semibold">{(costs.customsDuty).toFixed(2)} OMR (${(costs.customsDuty * EXCHANGE_RATE).toFixed(2)})</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">VAT (5%)</span>
-            <span className="font-semibold">{(costs.vat).toFixed(2)} OMR</span>
+            <span className="font-semibold">{(costs.vat).toFixed(2)} OMR (${(costs.vat * EXCHANGE_RATE).toFixed(2)})</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">Port Handling & Clearance</span>
-            <span className="font-semibold">{(costs.portHandling + costs.clearance).toFixed(2)} OMR</span>
+            <span className="font-semibold">{(costs.portHandling + costs.clearance).toFixed(2)} OMR (${((costs.portHandling + costs.clearance) * EXCHANGE_RATE).toFixed(2)})</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-secondary rounded">
             <span className="text-sm font-medium">Local Transport</span>
-            <span className="font-semibold">{(costs.transport).toFixed(2)} OMR</span>
+            <span className="font-semibold">{(costs.transport).toFixed(2)} OMR (${(costs.transport * EXCHANGE_RATE).toFixed(2)})</span>
           </div>
           <div className="border-t border-border pt-3 mt-3">
             <div className="flex justify-between items-center p-3 bg-primary text-primary-foreground rounded font-semibold">
               <span>Total Landed Cost</span>
-              <span>{costs.totalLandedCostOMR.toFixed(2)} OMR (${costs.totalLandedCostUSD.toFixed(2)})</span>
+              <span>{costs.totalLandedCostOMR.toFixed(2)} OMR (${(costs.totalLandedCostOMR * EXCHANGE_RATE).toFixed(2)})</span>
             </div>
           </div>
           <div className="flex justify-between items-center p-3 bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100 rounded font-semibold">
