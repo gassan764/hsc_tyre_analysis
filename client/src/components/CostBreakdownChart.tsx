@@ -2,32 +2,32 @@ import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recha
 import { Card } from '@/components/ui/card';
 
 interface CostBreakdownChartProps {
-  factoryPrice: number;
-  insurance: number;
-  shipping: number;
-  customsDuty: number;
-  vat: number;
-  handling: number;
+  fobOMR: number;
+  insuranceOMR: number;
+  shippingOMR: number;
+  customsDutyOMR: number;
+  vatOMR: number;
+  handlingOMR: number;
 }
 
 export default function CostBreakdownChart({
-  factoryPrice,
-  insurance,
-  shipping,
-  customsDuty,
-  vat,
-  handling,
+  fobOMR,
+  insuranceOMR,
+  shippingOMR,
+  customsDutyOMR,
+  vatOMR,
+  handlingOMR,
 }: CostBreakdownChartProps) {
   const data = [
-    { name: 'Factory Price', value: factoryPrice, fill: '#1e40af' },
-    { name: 'Insurance', value: insurance, fill: '#3b82f6' },
-    { name: 'Shipping', value: shipping, fill: '#60a5fa' },
-    { name: 'Customs Duty', value: customsDuty, fill: '#f59e0b' },
-    { name: 'VAT', value: vat, fill: '#ef4444' },
-    { name: 'Handling', value: handling, fill: '#8b5cf6' },
-  ];
+    { name: 'Factory Price', value: fobOMR, fill: '#1e40af' },
+    { name: 'Insurance', value: insuranceOMR, fill: '#3b82f6' },
+    { name: 'Shipping', value: shippingOMR, fill: '#60a5fa' },
+    { name: 'Customs Duty', value: customsDutyOMR, fill: '#f59e0b' },
+    { name: 'VAT', value: vatOMR, fill: '#ef4444' },
+    { name: 'Handling', value: handlingOMR, fill: '#8b5cf6' },
+  ].filter(item => item.value > 0);
 
-  const total = factoryPrice + insurance + shipping + customsDuty + vat + handling;
+  const total = fobOMR + insuranceOMR + shippingOMR + customsDutyOMR + vatOMR + handlingOMR;
 
   return (
     <Card className="p-6 card-elevated">
@@ -51,7 +51,7 @@ export default function CostBreakdownChart({
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value) => `$${(value as number).toFixed(2)}`}
+                formatter={(value) => `${(value as number).toFixed(2)} OMR`}
                 contentStyle={{
                   backgroundColor: 'rgba(255, 255, 255, 0.95)',
                   border: '1px solid #e5e7eb',
@@ -70,7 +70,7 @@ export default function CostBreakdownChart({
                 <span className="text-sm font-medium text-foreground">{item.name}</span>
               </div>
               <div className="text-right">
-                <div className="font-semibold text-foreground">${item.value.toFixed(2)}</div>
+                <div className="font-semibold text-foreground">{item.value.toFixed(2)} OMR</div>
                 <div className="text-xs text-muted-foreground">{((item.value / total) * 100).toFixed(1)}%</div>
               </div>
             </div>
@@ -78,7 +78,7 @@ export default function CostBreakdownChart({
           <div className="pt-3 border-t border-border mt-4">
             <div className="flex justify-between items-center">
               <span className="font-semibold text-foreground">Total Landed Cost</span>
-              <span className="text-lg font-bold text-primary">${total.toFixed(2)}</span>
+              <span className="text-lg font-bold text-primary">{total.toFixed(2)} OMR</span>
             </div>
           </div>
         </div>
