@@ -4,9 +4,8 @@ import { Slider } from '@/components/ui/slider';
 import { AlertCircle, CheckCircle, TrendingDown } from 'lucide-react';
 
 export default function CostCalculator() {
-  // Exchange rate: 1 OMR = 0.385 USD (or 1 USD = 2.6 OMR)
-  const OMR_TO_USD = 0.385;
-  const USD_TO_OMR = 1 / OMR_TO_USD; // 2.6
+  // EXCHANGE RATE: 1 USD = 2.6 OMR (verified)
+  const USD_TO_OMR = 2.6;
 
   // Current supplier price
   const CURRENT_PRICE_OMR = 115;
@@ -63,56 +62,70 @@ export default function CostCalculator() {
   );
   const [annualVolume, setAnnualVolume] = useState(1000);
 
-  // Calculate landed cost - ALL in USD first, then convert to OMR
+  // Calculate landed cost - SIMPLE AND CLEAR
   const calculateLandedCost = (fobUSD: number, volume: number) => {
-    // FOB and Insurance (USD)
+    // Step 1: FOB and Insurance (USD)
     const insuranceUSD = fobUSD * 0.01; // 1% of FOB
     const cifUSD = fobUSD + insuranceUSD;
 
-    // Shipping per tyre (USD)
+    // Step 2: Shipping per tyre (USD) - divide total by container capacity
     const shippingPerTyreUSD = OCEAN_FREIGHT_USD / CONTAINER_CAPACITY;
 
-    // Customs duty and VAT (calculated on CIF value in OMR)
+    // Step 3: Convert CIF to OMR for duty/VAT calculation
     const cifOMR = cifUSD * USD_TO_OMR;
+
+    // Step 4: Customs duty and VAT (calculated on CIF value)
     const customsDutyOMR = cifOMR * 0.05; // 5% on CIF
     const vatOMR = (cifOMR + customsDutyOMR) * 0.05; // 5% on CIF + duty
 
-    // Port handling and clearance per tyre (OMR)
+    // Step 5: Port handling and clearance per tyre (OMR)
     const portHandlingPerTyreOMR = PORT_HANDLING_OMR / CONTAINER_CAPACITY;
     const clearancePerTyreOMR = CLEARANCE_OMR / CONTAINER_CAPACITY;
     const transportPerTyreOMR = LOCAL_TRANSPORT_OMR / CONTAINER_CAPACITY;
 
-    // Total landed cost in OMR
+    // Step 6: Total landed cost in OMR
+    // All USD components converted to OMR, plus OMR components
     const totalLandedCostOMR =
-      cifOMR + // FOB + Insurance in OMR
+      cifOMR + // FOB + Insurance converted to OMR
       customsDutyOMR +
       vatOMR +
-      shippingPerTyreUSD * USD_TO_OMR + // Shipping in OMR
+      shippingPerTyreUSD * USD_TO_OMR + // Shipping converted to OMR
       portHandlingPerTyreOMR +
       clearancePerTyreOMR +
       transportPerTyreOMR;
 
-    // Convert back to USD for display
-    const totalLandedCostUSD = totalLandedCostOMR * OMR_TO_USD;
+    // Step 7: Calculate savings
+    const savingsPerTyreOMR = CURRENT_PRICE_OMR - totalLandedCostOMR;
 
     return {
+      // FOB and Insurance (in both currencies)
       fobUSD,
       fobOMR: fobUSD * USD_TO_OMR,
       insuranceUSD,
       insuranceOMR: insuranceUSD * USD_TO_OMR,
+
+      // Shipping per tyre (in both currencies)
       shippingUSD: shippingPerTyreUSD,
       shippingOMR: shippingPerTyreUSD * USD_TO_OMR,
+
+      // Duties and taxes (in OMR)
       customsDutyOMR,
       vatOMR,
+
+      // Port and handling (in OMR)
       portHandlingOMR: portHandlingPerTyreOMR,
       clearanceOMR: clearancePerTyreOMR,
       transportOMR: transportPerTyreOMR,
+
+      // Total landed cost
       totalLandedCostOMR,
-      totalLandedCostUSD,
-      savingsPerTyreOMR: CURRENT_PRICE_OMR - totalLandedCostOMR,
-      savingsPerTyreUSD: (CURRENT_PRICE_OMR * OMR_TO_USD) - totalLandedCostUSD,
-      annualSavingsOMR: (CURRENT_PRICE_OMR - totalLandedCostOMR) * volume,
-      annualSavingsUSD: ((CURRENT_PRICE_OMR * OMR_TO_USD) - totalLandedCostUSD) * volume,
+      totalLandedCostUSD: totalLandedCostOMR / USD_TO_OMR,
+
+      // Savings
+      savingsPerTyreOMR,
+      savingsPerTyreUSD: savingsPerTyreOMR / USD_TO_OMR,
+      annualSavingsOMR: savingsPerTyreOMR * volume,
+      annualSavingsUSD: (savingsPerTyreOMR / USD_TO_OMR) * volume,
     };
   };
 
@@ -266,10 +279,10 @@ export default function CostCalculator() {
             <div>
               <h5 className="font-semibold text-foreground mb-2">Annual Savings</h5>
               <p className="text-3xl font-bold text-primary mb-1">
-                {(costs.annualSavingsOMR / 1000).toFixed(0)}K OMR
+                {(costs.annualSavingsOMR / 1000).toFixed(1)}K OMR
               </p>
               <p className="text-sm text-muted-foreground">
-                ${(costs.annualSavingsUSD / 1000).toFixed(0)}K USD at {annualVolume.toLocaleString()} tyres/year
+                ${(costs.annualSavingsUSD / 1000).toFixed(1)}K USD at {annualVolume.toLocaleString()} tyres/year
               </p>
             </div>
           </div>
@@ -325,7 +338,7 @@ export default function CostCalculator() {
       <Card className="p-6 card-elevated bg-yellow-50 dark:bg-yellow-950 border-2 border-yellow-500">
         <h4 className="font-semibold text-foreground mb-3">⚠️ Important Notes</h4>
         <ul className="space-y-2 text-sm text-muted-foreground">
-          <li>• <strong>Exchange Rate:</strong> 1 OMR = 0.385 USD (1 USD = 2.6 OMR)</li>
+          <li>• <strong>Exchange Rate:</strong> 1 USD = 2.6 OMR (verified)</li>
           <li>• <strong>Data Source:</strong> Verified Q4 2024 market research. All pricing is current.</li>
           <li>• <strong>Container Capacity:</strong> 230 tyres assumes normal interlaced loading. NEVER allow "doubling".</li>
           <li>• <strong>Westlake Direct:</strong> Contractually blocked by Oman's Commercial Agencies Law. Triangle is recommended.</li>
