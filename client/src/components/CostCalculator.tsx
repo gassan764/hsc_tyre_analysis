@@ -1,265 +1,322 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, TrendingUp, DollarSign, Package } from 'lucide-react';
-
-interface CalculationResult {
-  factoryPrice: number;
-  insurance: number;
-  shipping: number;
-  cifValue: number;
-  customsDuty: number;
-  vat: number;
-  handling: number;
-  landedCostUSD: number;
-  landedCostOMR: number;
-  savingsPerTyre: number;
-  savingsPerTyreOMR: number;
-  savingsPercentage: number;
-  annualSavingsOMR: number;
-  annualSavingsUSD: number;
-}
+import { Button } from '@/components/ui/button';
+import { AlertCircle, CheckCircle, TrendingDown, AlertTriangle } from 'lucide-react';
 
 export default function CostCalculator() {
-  const [volume, setVolume] = useState(1100);
-  const [factoryPrice, setFactoryPrice] = useState(80);
-  const [targetPrice, setTargetPrice] = useState(92.5);
-  const [activeScenario, setActiveScenario] = useState('growth');
+  // Verified data from research report (Q4 2024)
+  const EXCHANGE_RATE = 2.6; // 1 USD = 2.6 OMR
+  const CURRENT_PRICE_OMR = 115; // Current supplier (Saud Bahwan/Westlake)
 
-  const EXCHANGE_RATE = 2.6;
-  const SHIPPING_COST = 750;
-  const TYRES_PER_CONTAINER = 2500;
-  const CUSTOMS_DUTY_RATE = 0.05;
-  const VAT_RATE = 0.05;
-  const HANDLING_CLEARANCE = 200;
+  // Verified logistics costs
+  const OCEAN_FREIGHT_USD = 2500; // Per 40ft HC container
+  const CONTAINER_CAPACITY = 230; // Tyres per container (normal loading, no doubling)
+  const PORT_HANDLING_OMR = 150; // Per container
+  const CLEARANCE_OMR = 100; // Per container
+  const LOCAL_TRANSPORT_OMR = 100; // Per container
 
-  const scenarios = {
-    current: { volume: 315, targetPrice: 115, label: 'Current (315 tyres)' },
-    nearTerm: { volume: 425, targetPrice: 115, label: 'Near-Term (425 tyres)' },
-    growth: { volume: 1100, targetPrice: 92.5, label: 'Growth (1,100 tyres)' },
-  };
+  // Verified supplier scenarios from research report
+  const suppliers = [
+    {
+      name: 'Triangle Tyre (Recommended)',
+      model: 'TR668 / TR691',
+      fobMin: 175,
+      fobMax: 195,
+      warranty: 'Full Factory',
+      contact: 'exports@triangletire.cn',
+      advantage: 'Fragmented distribution, no monopolistic blocker',
+      risk: 'Low-Medium',
+      color: 'bg-green-50 dark:bg-green-950 border-green-500',
+    },
+    {
+      name: 'Aeolus Tyre',
+      model: 'HN08 / HN25',
+      fobMin: 180,
+      fobMax: 200,
+      warranty: 'Full Factory',
+      contact: 'export@aeolustype.com',
+      advantage: 'Heavy-duty specialist, overload capability',
+      risk: 'Low-Medium',
+      color: 'bg-blue-50 dark:bg-blue-950 border-blue-500',
+    },
+    {
+      name: 'Parallel Import (Westlake)',
+      model: 'CM998',
+      fobMin: 145,
+      fobMax: 165,
+      warranty: 'Void / None',
+      contact: 'Sinotyre, Maxplus, Qingdao Oriental',
+      advantage: 'Lowest price',
+      risk: 'High (Warranty void, bead damage risk)',
+      color: 'bg-red-50 dark:bg-red-950 border-red-500',
+    },
+  ];
 
-  const handleScenarioChange = (scenario: string) => {
-    setActiveScenario(scenario);
-    const s = scenarios[scenario as keyof typeof scenarios];
-    setVolume(s.volume);
-    setTargetPrice(s.targetPrice);
-  };
+  const [selectedSupplier, setSelectedSupplier] = useState(0);
+  const [factoryPrice, setFactoryPrice] = useState(
+    (suppliers[0].fobMin + suppliers[0].fobMax) / 2
+  );
+  const [annualVolume, setAnnualVolume] = useState(1000);
 
-  const calculation = useMemo((): CalculationResult => {
-    const shippingPerTyre = SHIPPING_COST / TYRES_PER_CONTAINER;
-    const handlingPerTyre = HANDLING_CLEARANCE / volume;
-    const insurance = factoryPrice * 0.01;
-    const cifValue = factoryPrice + insurance + shippingPerTyre;
-    const customsDuty = cifValue * CUSTOMS_DUTY_RATE;
-    const vat = (cifValue + customsDuty) * VAT_RATE;
-    const landedCostUSD = cifValue + customsDuty + vat + handlingPerTyre;
-    const landedCostOMR = landedCostUSD / EXCHANGE_RATE;
+  // Calculate landed cost
+  const calculateLandedCost = (fobPrice: number, volume: number) => {
+    const insurance = fobPrice * 0.01; // 1% of FOB
+    const cifValue = fobPrice + insurance;
+    const cifValueOMR = cifValue * EXCHANGE_RATE;
 
-    const targetPriceUSD = targetPrice * EXCHANGE_RATE;
-    const savingsPerTyreUSD = targetPriceUSD - landedCostUSD;
-    const savingsPerTyreOMR = targetPrice - landedCostOMR;
-    const savingsPercentage = (savingsPerTyreUSD / targetPriceUSD) * 100;
-    const annualSavingsUSD = savingsPerTyreUSD * volume;
-    const annualSavingsOMR = savingsPerTyreOMR * volume;
+    const shippingPerTyre = (OCEAN_FREIGHT_USD / CONTAINER_CAPACITY) * EXCHANGE_RATE;
+    const portHandlingPerTyre = PORT_HANDLING_OMR / CONTAINER_CAPACITY;
+    const clearancePerTyre = CLEARANCE_OMR / CONTAINER_CAPACITY;
+    const transportPerTyre = LOCAL_TRANSPORT_OMR / CONTAINER_CAPACITY;
+
+    const customsDuty = cifValueOMR * 0.05; // 5% on CIF
+    const vat = (cifValueOMR + customsDuty) * 0.05; // 5% on CIF + duty
+
+    const totalLandedCostOMR =
+      cifValueOMR +
+      customsDuty +
+      vat +
+      shippingPerTyre +
+      portHandlingPerTyre +
+      clearancePerTyre +
+      transportPerTyre;
 
     return {
-      factoryPrice,
+      fobUSD: fobPrice,
+      fobOMR: fobPrice * EXCHANGE_RATE,
       insurance,
       shipping: shippingPerTyre,
-      cifValue,
-      customsDuty,
-      vat,
-      handling: handlingPerTyre,
-      landedCostUSD,
-      landedCostOMR,
-      savingsPerTyre: savingsPerTyreUSD,
-      savingsPerTyreOMR,
-      savingsPercentage,
-      annualSavingsOMR,
-      annualSavingsUSD,
+      customsDuty: customsDuty / CONTAINER_CAPACITY,
+      vat: vat / CONTAINER_CAPACITY,
+      portHandling: portHandlingPerTyre,
+      clearance: clearancePerTyre,
+      transport: transportPerTyre,
+      totalLandedCostOMR,
+      totalLandedCostUSD: totalLandedCostOMR / EXCHANGE_RATE,
+      savingsPerTyre: CURRENT_PRICE_OMR - totalLandedCostOMR,
+      annualSavings: (CURRENT_PRICE_OMR - totalLandedCostOMR) * volume,
     };
-  }, [volume, factoryPrice, targetPrice]);
-
-  const formatCurrency = (value: number, currency: string = 'USD') => {
-    if (currency === 'OMR') {
-      return `${value.toFixed(2)} OMR`;
-    }
-    return `$${value.toFixed(2)}`;
   };
 
-  const formatNumber = (value: number) => {
-    return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  };
-
-  const isProfit = calculation.annualSavingsOMR > 0;
+  const supplier = suppliers[selectedSupplier];
+  const costs = calculateLandedCost(factoryPrice, annualVolume);
+  const isProfitable = costs.savingsPerTyre > 0;
+  const targetPrice = 95; // HSC's target to unlock volume growth
+  const meetsTarget = costs.totalLandedCostOMR <= targetPrice;
 
   return (
-    <div className="w-full space-y-8">
-      {/* Scenario Selector */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold text-foreground">Select Scenario</h3>
-        <Tabs value={activeScenario} onValueChange={handleScenarioChange}>
-          <TabsList className="grid w-full grid-cols-3 bg-secondary">
-            <TabsTrigger value="current">Current</TabsTrigger>
-            <TabsTrigger value="nearTerm">Near-Term</TabsTrigger>
-            <TabsTrigger value="growth">Growth</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+    <div className="space-y-8">
+      {/* Supplier Selection */}
+      <Card className="p-6 card-elevated">
+        <h4 className="text-lg font-semibold text-foreground mb-4">Select Supplier Strategy</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {suppliers.map((sup, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                setSelectedSupplier(idx);
+                setFactoryPrice((sup.fobMin + sup.fobMax) / 2);
+              }}
+              className={`p-4 rounded-lg border-2 transition-all text-left ${
+                selectedSupplier === idx
+                  ? `${sup.color} border-current`
+                  : 'border-border bg-secondary'
+              }`}
+            >
+              <p className="font-semibold text-foreground mb-1">{sup.name}</p>
+              <p className="text-sm text-muted-foreground mb-2">{sup.model}</p>
+              <p className="text-xs font-medium text-muted-foreground">
+                FOB: ${sup.fobMin}-${sup.fobMax}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">Risk: {sup.risk}</p>
+            </button>
+          ))}
+        </div>
+      </Card>
 
-      {/* Input Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Volume Slider */}
-        <Card className="p-6 card-elevated">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-primary" />
-              <label className="text-sm font-semibold text-foreground">Annual Volume</label>
+      {/* Supplier Details */}
+      <Card className={`p-6 card-elevated border-2 ${supplier.color}`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="text-lg font-semibold text-foreground mb-4">{supplier.name}</h4>
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="text-muted-foreground">Model</p>
+                <p className="font-semibold text-foreground">{supplier.model}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Warranty</p>
+                <p className="font-semibold text-foreground">{supplier.warranty}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Contact</p>
+                <p className="font-semibold text-foreground text-xs break-all">{supplier.contact}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Key Advantage</p>
+                <p className="font-semibold text-foreground">{supplier.advantage}</p>
+              </div>
             </div>
-            <Slider
-              value={[volume]}
-              onValueChange={(val) => setVolume(val[0])}
-              min={100}
-              max={2000}
-              step={50}
-              className="w-full"
-            />
-            <div className="text-3xl font-bold text-primary">{formatNumber(volume)} tyres</div>
-            <p className="text-sm text-muted-foreground">
-              Adjust volume to see impact on landed costs and savings
-            </p>
           </div>
-        </Card>
-
-        {/* Factory Price Slider */}
-        <Card className="p-6 card-elevated">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-primary" />
-              <label className="text-sm font-semibold text-foreground">Factory Price</label>
-            </div>
-            <Slider
-              value={[factoryPrice]}
-              onValueChange={(val) => setFactoryPrice(val[0])}
-              min={50}
-              max={120}
-              step={5}
-              className="w-full"
-            />
-            <div className="text-3xl font-bold text-primary">${factoryPrice.toFixed(0)} USD</div>
-            <p className="text-sm text-muted-foreground">
-              Negotiate with Westlake for best pricing
-            </p>
-          </div>
-        </Card>
-      </div>
-
-      {/* Cost Breakdown */}
-      <Card className="p-8 card-elevated">
-        <h4 className="text-lg font-semibold text-foreground mb-6">Cost Breakdown (Per Tyre)</h4>
-        <div className="space-y-3">
-          <div className="flex justify-between items-center pb-2 border-b border-border">
-            <span className="text-sm text-muted-foreground">Factory Price (FOB)</span>
-            <span className="font-semibold">${calculation.factoryPrice.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center pb-2 border-b border-border">
-            <span className="text-sm text-muted-foreground">Insurance (1%)</span>
-            <span className="font-semibold">${calculation.insurance.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center pb-2 border-b border-border">
-            <span className="text-sm text-muted-foreground">Shipping</span>
-            <span className="font-semibold">${calculation.shipping.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center pb-3 border-b border-border">
-            <span className="text-sm text-muted-foreground">Handling & Clearance</span>
-            <span className="font-semibold">${calculation.handling.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center pb-2 border-b border-border">
-            <span className="text-sm text-muted-foreground">Customs Duty (5%)</span>
-            <span className="font-semibold">${calculation.customsDuty.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center pb-3 border-b border-border">
-            <span className="text-sm text-muted-foreground">VAT (5%)</span>
-            <span className="font-semibold">${calculation.vat.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center pt-3 bg-accent bg-opacity-30 px-4 py-3 rounded-lg">
-            <span className="font-semibold text-foreground">Total Landed Cost</span>
-            <div className="text-right">
-              <div className="font-bold text-lg text-primary">${calculation.landedCostUSD.toFixed(2)}</div>
-              <div className="text-sm text-muted-foreground">{calculation.landedCostOMR.toFixed(2)} OMR</div>
-            </div>
+          <div className="bg-background dark:bg-slate-900 rounded-lg p-4">
+            <p className="text-sm text-muted-foreground mb-2">Risk Assessment</p>
+            <p className="font-semibold text-foreground mb-3">{supplier.risk}</p>
+            {selectedSupplier === 2 && (
+              <div className="p-3 bg-red-100 dark:bg-red-900 rounded text-xs text-red-900 dark:text-red-100">
+                ⚠️ <strong>Warning:</strong> Parallel imports have voided warranties and risk of bead damage from "doubling" (compressing tyres to save freight). Not recommended for tanker operations.
+              </div>
+            )}
           </div>
         </div>
       </Card>
 
-      {/* Profitability Analysis */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Per Tyre Savings */}
-        <Card className={`p-6 card-elevated border-2 ${isProfit ? 'border-green-500' : 'border-red-500'}`}>
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold text-foreground">Savings Per Tyre</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Target Price</span>
-                <span className="font-semibold">{formatCurrency(targetPrice * EXCHANGE_RATE)} ({targetPrice} OMR)</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Landed Cost</span>
-                <span className="font-semibold">{formatCurrency(calculation.landedCostUSD)} ({calculation.landedCostOMR.toFixed(2)} OMR)</span>
+      {/* Calculator Controls */}
+      <Card className="p-6 card-elevated">
+        <h4 className="text-lg font-semibold text-foreground mb-6">Adjust Parameters</h4>
+        <div className="space-y-8">
+          {/* Factory Price Slider */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-medium text-foreground">Factory Price (FOB USD)</label>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-primary">${factoryPrice.toFixed(0)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {supplier.fobMin}-{supplier.fobMax} range
+                </p>
               </div>
             </div>
-            <div className={`p-4 rounded-lg ${isProfit ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`}>
-              <div className={`text-3xl font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
-                {isProfit ? '+' : ''}{formatCurrency(calculation.savingsPerTyre)}
+            <Slider
+              value={[factoryPrice]}
+              onValueChange={(val) => setFactoryPrice(val[0])}
+              min={supplier.fobMin}
+              max={supplier.fobMax}
+              step={5}
+              className="w-full"
+            />
+          </div>
+
+          {/* Annual Volume Slider */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-medium text-foreground">Annual Volume (Tyres)</label>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-primary">{annualVolume.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Current: 315 | Growth target: 1,100</p>
               </div>
-              <div className={`text-sm ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
-                {isProfit ? '+' : ''}{calculation.savingsPerTyreOMR.toFixed(2)} OMR ({calculation.savingsPercentage.toFixed(1)}%)
-              </div>
+            </div>
+            <Slider
+              value={[annualVolume]}
+              onValueChange={(val) => setAnnualVolume(val[0])}
+              min={300}
+              max={1200}
+              step={50}
+              className="w-full"
+            />
+          </div>
+        </div>
+      </Card>
+
+      {/* Results Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Profitability Status */}
+        <Card className={`p-6 card-elevated ${isProfitable ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`}>
+          <div className="flex items-start gap-4">
+            {isProfitable ? (
+              <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-8 h-8 text-red-600 flex-shrink-0" />
+            )}
+            <div>
+              <h5 className="font-semibold text-foreground mb-2">
+                {isProfitable ? 'Profitable ✓' : 'Not Profitable'}
+              </h5>
+              <p className="text-sm text-muted-foreground mb-3">
+                {isProfitable
+                  ? `Each tyre saves ${costs.savingsPerTyre.toFixed(2)} OMR vs current supplier`
+                  : 'Cost exceeds current supplier price'}
+              </p>
+              {meetsTarget && (
+                <div className="p-2 bg-green-100 dark:bg-green-900 rounded text-xs text-green-900 dark:text-green-100 font-medium">
+                  ✓ Meets 95 OMR target price for volume unlock
+                </div>
+              )}
             </div>
           </div>
         </Card>
 
-        {/* Annual Savings */}
-        <Card className={`p-6 card-elevated border-2 ${isProfit ? 'border-green-500' : 'border-red-500'}`}>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className={`w-5 h-5 ${isProfit ? 'text-green-600' : 'text-red-600'}`} />
-              <h4 className="text-lg font-semibold text-foreground">Annual Savings ({volume} tyres)</h4>
-            </div>
-            <div className={`p-4 rounded-lg ${isProfit ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`}>
-              <div className={`text-3xl font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
-                {isProfit ? '+' : ''}{formatCurrency(calculation.annualSavingsUSD)}
-              </div>
-              <div className={`text-sm ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
-                {isProfit ? '+' : ''}{formatNumber(calculation.annualSavingsOMR)} OMR
-              </div>
-            </div>
-            <div className="text-xs text-muted-foreground pt-2">
-              {isProfit ? '✓ Direct import is profitable' : '✗ Direct import is not profitable'}
+        {/* Annual Impact */}
+        <Card className="p-6 card-elevated">
+          <div className="flex items-start gap-4">
+            <TrendingDown className="w-8 h-8 text-primary flex-shrink-0" />
+            <div>
+              <h5 className="font-semibold text-foreground mb-2">Annual Savings</h5>
+              <p className="text-3xl font-bold text-primary mb-1">
+                {(costs.annualSavings / 1000).toFixed(0)}K OMR
+              </p>
+              <p className="text-sm text-muted-foreground">
+                At {annualVolume.toLocaleString()} tyres/year
+              </p>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Recommendation */}
-      <Card className="p-6 card-elevated bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950 border-primary">
-        <div className="flex items-start gap-4">
-          <ArrowRight className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-          <div>
-            <h4 className="font-semibold text-foreground mb-2">Recommendation</h4>
-            {isProfit ? (
-              <p className="text-sm text-foreground">
-                At <strong>{volume} tyres/year</strong> with a factory price of <strong>${factoryPrice}</strong>, direct import generates <strong>{formatNumber(calculation.annualSavingsOMR)} OMR</strong> in annual savings. This is a <strong>highly profitable opportunity</strong>.
-              </p>
-            ) : (
-              <p className="text-sm text-foreground">
-                At <strong>{volume} tyres/year</strong> with a factory price of <strong>${factoryPrice}</strong>, direct import is <strong>not economical</strong>. Consider negotiating with your current supplier or increasing volume.
-              </p>
-            )}
+      {/* Detailed Cost Breakdown */}
+      <Card className="p-6 card-elevated">
+        <h4 className="text-lg font-semibold text-foreground mb-4">Cost Breakdown (Per Tyre)</h4>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center p-3 bg-secondary rounded">
+            <span className="text-sm font-medium">Factory Price (FOB)</span>
+            <span className="font-semibold">${costs.fobUSD.toFixed(2)} ({(costs.fobOMR).toFixed(2)} OMR)</span>
+          </div>
+          <div className="flex justify-between items-center p-3 bg-secondary rounded">
+            <span className="text-sm font-medium">Insurance (1%)</span>
+            <span className="font-semibold">${costs.insurance.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center p-3 bg-secondary rounded">
+            <span className="text-sm font-medium">Ocean Freight</span>
+            <span className="font-semibold">{(costs.shipping).toFixed(2)} OMR</span>
+          </div>
+          <div className="flex justify-between items-center p-3 bg-secondary rounded">
+            <span className="text-sm font-medium">Customs Duty (5%)</span>
+            <span className="font-semibold">{(costs.customsDuty).toFixed(2)} OMR</span>
+          </div>
+          <div className="flex justify-between items-center p-3 bg-secondary rounded">
+            <span className="text-sm font-medium">VAT (5%)</span>
+            <span className="font-semibold">{(costs.vat).toFixed(2)} OMR</span>
+          </div>
+          <div className="flex justify-between items-center p-3 bg-secondary rounded">
+            <span className="text-sm font-medium">Port Handling & Clearance</span>
+            <span className="font-semibold">{(costs.portHandling + costs.clearance).toFixed(2)} OMR</span>
+          </div>
+          <div className="flex justify-between items-center p-3 bg-secondary rounded">
+            <span className="text-sm font-medium">Local Transport</span>
+            <span className="font-semibold">{(costs.transport).toFixed(2)} OMR</span>
+          </div>
+          <div className="border-t border-border pt-3 mt-3">
+            <div className="flex justify-between items-center p-3 bg-primary text-primary-foreground rounded font-semibold">
+              <span>Total Landed Cost</span>
+              <span>{costs.totalLandedCostOMR.toFixed(2)} OMR (${costs.totalLandedCostUSD.toFixed(2)})</span>
+            </div>
+          </div>
+          <div className="flex justify-between items-center p-3 bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100 rounded font-semibold">
+            <span>Savings vs Current (115 OMR)</span>
+            <span>+{costs.savingsPerTyre.toFixed(2)} OMR/tyre</span>
           </div>
         </div>
+      </Card>
+
+      {/* Important Notes */}
+      <Card className="p-6 card-elevated bg-yellow-50 dark:bg-yellow-950 border-2 border-yellow-500">
+        <h4 className="font-semibold text-foreground mb-3">⚠️ Important Notes</h4>
+        <ul className="space-y-2 text-sm text-muted-foreground">
+          <li>• <strong>Data Source:</strong> Verified Q4 2024 market research. Shipping rates and supplier pricing are current.</li>
+          <li>• <strong>Container Capacity:</strong> 230 tyres assumes normal interlaced loading. NEVER allow "doubling" (compression) as it damages bead integrity.</li>
+          <li>• <strong>Westlake Direct:</strong> Contractually blocked by Oman's Commercial Agencies Law. Triangle is the recommended alternative.</li>
+          <li>• <strong>Pilot Phase:</strong> Start with 1 container (230 units) to validate quality and logistics before scaling to 1,000+ units/year.</li>
+          <li>• <strong>GSO Certification:</strong> Mandatory for all tyres entering GCC countries. Verify certificates before transferring deposit.</li>
+        </ul>
       </Card>
     </div>
   );

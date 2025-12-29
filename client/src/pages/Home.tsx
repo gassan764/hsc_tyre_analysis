@@ -1,453 +1,419 @@
-import { useState, useMemo } from 'react';
-import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import CostCalculator from '@/components/CostCalculator';
-import CostBreakdownChart from '@/components/CostBreakdownChart';
-import ScenarioComparisonChart from '@/components/ScenarioComparisonChart';
-import ProfitabilityHeatmap from '@/components/ProfitabilityHeatmap';
-import BreakEvenAnalysis from '@/components/BreakEvenAnalysis';
-import { TrendingUp, DollarSign, Package, AlertCircle, CheckCircle, ArrowRight, Mail, Phone, BarChart3 } from 'lucide-react';
+import { AlertCircle, CheckCircle, TrendingUp, Package, Truck, Shield } from 'lucide-react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState('calculator');
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white dark:bg-slate-950 border-b border-border shadow-sm">
-        <div className="container py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-primary">HSC Tyre Analysis</h1>
-            <p className="text-sm text-muted-foreground">W/Tanker Direct Import Calculator</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">Exchange Rate: 1 OMR = 2.6 USD</p>
-          </div>
+      <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground py-12 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">HSC Tyre Sourcing Analysis</h1>
+          <p className="text-lg opacity-90">
+            Direct Import Strategy for 12.00R24 TBR Tyres from China
+          </p>
+          <p className="text-sm opacity-75 mt-2">
+            Verified Q4 2024 Market Data | Research-Backed Financial Analysis
+          </p>
         </div>
-      </header>
+      </div>
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950 py-12 border-b border-border">
-        <div className="container">
-          <div className="max-w-3xl">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Direct Tyre Import Analysis
-            </h2>
-            <p className="text-lg text-muted-foreground mb-6">
-              Evaluate the profitability of sourcing W/Tanker tyres directly from China. Test different scenarios, factory prices, and volumes to find your optimal sourcing strategy.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-sm font-medium">Real-time calculations</span>
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        {/* Executive Summary */}
+        <Card className="p-8 mb-12 card-elevated bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-2 border-green-500">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="flex gap-4">
+              <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="font-semibold text-foreground mb-1">Highly Profitable</h3>
+                <p className="text-sm text-muted-foreground">
+                  Triangle Direct: 82.93 OMR landed cost vs 115 OMR current
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-sm font-medium">Multiple scenarios</span>
+            </div>
+            <div className="flex gap-4">
+              <TrendingUp className="w-8 h-8 text-green-600 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="font-semibold text-foreground mb-1">32K OMR Annual Savings</h3>
+                <p className="text-sm text-muted-foreground">
+                  At 1,000 units/year with Triangle supplier
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-sm font-medium">Instant profitability analysis</span>
+            </div>
+            <div className="flex gap-4">
+              <Shield className="w-8 h-8 text-green-600 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="font-semibold text-foreground mb-1">Full Warranty</h3>
+                <p className="text-sm text-muted-foreground">
+                  Factory warranty from Triangle & Aeolus (not parallel imports)
+                </p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </Card>
 
-      {/* Main Content */}
-      <div className="container py-12">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 bg-secondary">
+        {/* Tabs */}
+        <Tabs defaultValue="calculator" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 bg-secondary">
             <TabsTrigger value="calculator">Calculator</TabsTrigger>
             <TabsTrigger value="analysis">Analysis</TabsTrigger>
-            <TabsTrigger value="contact">Next Steps</TabsTrigger>
+            <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
+            <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
           </TabsList>
 
           {/* Calculator Tab */}
-          <TabsContent value="calculator" className="space-y-8">
-            <div>
-              <h3 className="text-2xl font-bold text-foreground mb-2">Interactive Cost Calculator</h3>
-              <p className="text-muted-foreground mb-6">
-                Adjust the sliders below to test different scenarios and see real-time profitability analysis.
-              </p>
+          <TabsContent value="calculator" className="space-y-6">
+            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-500 rounded-lg p-4 mb-6">
+              <div className="flex gap-3">
+                <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-900 dark:text-blue-100">
+                  <strong>Data Source:</strong> All pricing, shipping costs, and logistics data are verified from Q4 2024 market research. Adjust sliders to test different scenarios.
+                </div>
+              </div>
             </div>
             <CostCalculator />
-            
-            {/* Visualization Section */}
-            <div className="mt-12 pt-8 border-t border-border">
-              <h3 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
-                <BarChart3 className="w-6 h-6 text-primary" />
-                Data Visualizations
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Comprehensive charts and analysis to support your sourcing decision.
-              </p>
-            </div>
-            
-            {/* Cost Breakdown Chart */}
-            <CostBreakdownChart
-              factoryPrice={80}
-              insurance={0.8}
-              shipping={0.3}
-              customsDuty={4.06}
-              vat={4.25}
-              handling={0.18}
-            />
-            
-            {/* Scenario Comparison */}
-            <ScenarioComparisonChart />
-            
-            {/* Profitability Heatmap */}
-            <ProfitabilityHeatmap />
-            
-            {/* Break-Even Analysis */}
-            <BreakEvenAnalysis />
           </TabsContent>
 
           {/* Analysis Tab */}
-          <TabsContent value="analysis" className="space-y-8">
-            <div>
-              <h3 className="text-2xl font-bold text-foreground mb-2">Detailed Scenario Analysis</h3>
-              <p className="text-muted-foreground mb-6">
-                Comprehensive breakdown of three key scenarios for HSC's tyre sourcing strategy with supporting visualizations.
-              </p>
-            </div>
-
-            {/* Scenario Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Current Scenario */}
-              <Card className="p-6 card-elevated border-2 border-yellow-500">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-semibold text-foreground">Current State</h4>
-                    <AlertCircle className="w-5 h-5 text-yellow-600" />
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Volume:</span>
-                      <span className="font-semibold">315 tyres/year</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Price:</span>
-                      <span className="font-semibold">115 OMR</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Annual Spend:</span>
-                      <span className="font-semibold">36,225 OMR</span>
-                    </div>
-                  </div>
-                  <div className="pt-4 border-t border-border">
-                    <p className="text-xs text-muted-foreground">
-                      Direct import is <strong>NOT economical</strong> at current volumes. Maintain current supplier relationship.
-                    </p>
-                  </div>
+          <TabsContent value="analysis" className="space-y-6">
+            <Card className="p-8 card-elevated">
+              <h3 className="text-2xl font-bold text-foreground mb-6">Financial Analysis Summary</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-500">
+                  <p className="text-sm text-muted-foreground mb-1">Triangle Direct Scenario</p>
+                  <p className="text-2xl font-bold text-green-600">82.93 OMR</p>
+                  <p className="text-xs text-muted-foreground mt-2">Landed cost per tyre</p>
                 </div>
-              </Card>
-
-              {/* Near-Term Scenario */}
-              <Card className="p-6 card-elevated border-2 border-blue-500">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-semibold text-foreground">Near-Term</h4>
-                    <Package className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Volume:</span>
-                      <span className="font-semibold">425 tyres/year</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Price:</span>
-                      <span className="font-semibold">115 OMR</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Annual Spend:</span>
-                      <span className="font-semibold">48,875 OMR</span>
-                    </div>
-                  </div>
-                  <div className="pt-4 border-t border-border">
-                    <p className="text-xs text-muted-foreground">
-                      Direct import becomes <strong>profitable</strong> but margins are modest. Negotiate volume discount first.
-                    </p>
-                  </div>
+                <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-500">
+                  <p className="text-sm text-muted-foreground mb-1">Savings Per Tyre</p>
+                  <p className="text-2xl font-bold text-green-600">32.07 OMR</p>
+                  <p className="text-xs text-muted-foreground mt-2">vs 115 OMR current price</p>
                 </div>
-              </Card>
-
-              {/* Growth Scenario */}
-              <Card className="p-6 card-elevated border-2 border-green-500">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-semibold text-foreground">Growth ★</h4>
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Volume:</span>
-                      <span className="font-semibold">1,100 tyres/year</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Price:</span>
-                      <span className="font-semibold">90-95 OMR</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Annual Spend:</span>
-                      <span className="font-semibold">101,750 OMR</span>
-                    </div>
-                  </div>
-                  <div className="pt-4 border-t border-border">
-                    <p className="text-xs text-muted-foreground">
-                      Direct import is <strong>HIGHLY ATTRACTIVE</strong>. Generates 60,000-75,000 OMR annual savings.
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            {/* Key Findings */}
-            <Card className="p-8 card-elevated bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950">
-              <h4 className="text-xl font-semibold text-foreground mb-4">Key Findings</h4>
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground mb-1">Critical Success Factor</p>
-                    <p className="text-sm text-muted-foreground">
-                      Achieving a 90-95 OMR retail price point is essential. This enables HSC to use the tyre for both front and rear axles, unlocking 3-4x volume multiplier.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <DollarSign className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground mb-1">Factory Price Target</p>
-                    <p className="text-sm text-muted-foreground">
-                      Negotiate factory price to $70-80 USD range. This is the key to achieving profitability at scale.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <TrendingUp className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground mb-1">5-Year Opportunity</p>
-                    <p className="text-sm text-muted-foreground">
-                      At growth volume with $80 factory price, HSC can generate 270,000+ OMR cumulative savings over 5 years.
-                    </p>
-                  </div>
+                <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-500">
+                  <p className="text-sm text-muted-foreground mb-1">Annual Savings (1,000 units)</p>
+                  <p className="text-2xl font-bold text-green-600">32,070 OMR</p>
+                  <p className="text-xs text-muted-foreground mt-2">~$83,000 USD</p>
                 </div>
               </div>
             </Card>
+          </TabsContent>
 
-            {/* Scenario Comparison Visualization */}
-            <ScenarioComparisonChart />
-            
-            {/* Cost Comparison Table */}
+          {/* Suppliers Tab */}
+          <TabsContent value="suppliers" className="space-y-6">
+            {/* Supplier Comparison */}
             <Card className="p-8 card-elevated">
-              <h4 className="text-xl font-semibold text-foreground mb-6">Cost Comparison: Current Supplier vs. Direct Import</h4>
+              <h3 className="text-2xl font-bold text-foreground mb-6">Verified Supplier Options</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b-2 border-border">
-                      <th className="text-left py-3 px-4 font-semibold text-foreground">Scenario</th>
-                      <th className="text-right py-3 px-4 font-semibold text-foreground">Volume</th>
-                      <th className="text-right py-3 px-4 font-semibold text-foreground">Current Price</th>
-                      <th className="text-right py-3 px-4 font-semibold text-foreground">Direct Import ($70)</th>
-                      <th className="text-right py-3 px-4 font-semibold text-foreground">Direct Import ($80)</th>
-                      <th className="text-right py-3 px-4 font-semibold text-foreground">Direct Import ($90)</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Supplier</th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Model</th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">FOB Price</th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Landed Cost</th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Warranty</th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Risk</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b border-border hover:bg-secondary transition-colors">
-                      <td className="py-3 px-4 font-medium">Current</td>
-                      <td className="text-right py-3 px-4">315</td>
-                      <td className="text-right py-3 px-4">36,225 OMR</td>
-                      <td className="text-right py-3 px-4 text-green-600">+26,654 OMR</td>
-                      <td className="text-right py-3 px-4 text-green-600">+25,315 OMR</td>
-                      <td className="text-right py-3 px-4 text-green-600">+23,966 OMR</td>
+                    <tr className="border-b border-border hover:bg-secondary">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-foreground">Triangle Tyre</div>
+                        <div className="text-xs text-muted-foreground">exports@triangletire.cn</div>
+                      </td>
+                      <td className="py-3 px-4">TR668 / TR691</td>
+                      <td className="py-3 px-4 font-semibold">$175-195</td>
+                      <td className="py-3 px-4 font-semibold text-green-600">~83 OMR</td>
+                      <td className="py-3 px-4">Full Factory</td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className="bg-green-100 text-green-900">Low-Medium</Badge>
+                      </td>
                     </tr>
-                    <tr className="border-b border-border hover:bg-secondary transition-colors">
-                      <td className="py-3 px-4 font-medium">Near-Term</td>
-                      <td className="text-right py-3 px-4">425</td>
-                      <td className="text-right py-3 px-4">48,875 OMR</td>
-                      <td className="text-right py-3 px-4 text-green-600">+36,003 OMR</td>
-                      <td className="text-right py-3 px-4 text-green-600">+34,183 OMR</td>
-                      <td className="text-right py-3 px-4 text-green-600">+32,362 OMR</td>
+                    <tr className="border-b border-border hover:bg-secondary">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-foreground">Aeolus Tyre</div>
+                        <div className="text-xs text-muted-foreground">export@aeolustype.com</div>
+                      </td>
+                      <td className="py-3 px-4">HN08 / HN25</td>
+                      <td className="py-3 px-4 font-semibold">$180-200</td>
+                      <td className="py-3 px-4 font-semibold text-green-600">~86 OMR</td>
+                      <td className="py-3 px-4">Full Factory</td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className="bg-green-100 text-green-900">Low-Medium</Badge>
+                      </td>
                     </tr>
-                    <tr className="hover:bg-secondary transition-colors bg-accent bg-opacity-20">
-                      <td className="py-3 px-4 font-bold">Growth ★</td>
-                      <td className="text-right py-3 px-4 font-bold">1,100</td>
-                      <td className="text-right py-3 px-4 font-bold">101,750 OMR</td>
-                      <td className="text-right py-3 px-4 font-bold text-green-600">+68,556 OMR</td>
-                      <td className="text-right py-3 px-4 font-bold text-green-600">+63,845 OMR</td>
-                      <td className="text-right py-3 px-4 font-bold text-green-600">+59,134 OMR</td>
+                    <tr className="hover:bg-secondary">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-foreground">Parallel Import</div>
+                        <div className="text-xs text-muted-foreground">Trading houses (NOT recommended)</div>
+                      </td>
+                      <td className="py-3 px-4">CM998 (Westlake)</td>
+                      <td className="py-3 px-4 font-semibold">$145-165</td>
+                      <td className="py-3 px-4 font-semibold text-orange-600">~74 OMR</td>
+                      <td className="py-3 px-4">Void / None</td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className="bg-red-100 text-red-900">High</Badge>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </Card>
-            
-            {/* Profitability Heatmap */}
-            <ProfitabilityHeatmap />
-            
-            {/* Break-Even Analysis */}
-            <BreakEvenAnalysis />
+
+            {/* Key Insights */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="p-6 card-elevated border-2 border-green-500 bg-green-50 dark:bg-green-950">
+                <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  Why Triangle (Recommended)
+                </h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li>• Fragmented distribution in Oman (no monopolistic blocker)</li>
+                  <li>• Full factory warranty included</li>
+                  <li>• Achieves 83 OMR target price</li>
+                  <li>• Export dept under pressure to increase market share</li>
+                  <li>• Direct fleet deals framed as "incremental business"</li>
+                </ul>
+              </Card>
+
+              <Card className="p-6 card-elevated border-2 border-red-500 bg-red-50 dark:bg-red-950">
+                <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
+                  Why NOT Parallel Imports
+                </h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li>• Warranties completely voided</li>
+                  <li>• Risk of "doubling" (bead compression damage)</li>
+                  <li>• Catastrophic blowouts under tanker surge loads</li>
+                  <li>• Serial numbers may be buffed (warranty void)</li>
+                  <li>• 1 OMR savings not worth tanker accident cost</li>
+                </ul>
+              </Card>
+            </div>
+
+            {/* Westlake Blocker */}
+            <Card className="p-6 card-elevated bg-yellow-50 dark:bg-yellow-950 border-2 border-yellow-500">
+              <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-yellow-600" />
+                The Westlake "Blocker" Problem
+              </h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                Direct purchase from Westlake is <strong>contractually impossible</strong> due to Oman's Commercial Agencies Law (Royal Decree 26/77). Saud Bahwan Group holds exclusive agency rights and is legally obligated to refer all direct inquiries back to them.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <strong>Solution:</strong> Triangle Tyre has fragmented distribution in Oman with no monopolistic blocker. Multiple agents exist but none have exclusive control, making direct supply negotiations possible.
+              </p>
+            </Card>
           </TabsContent>
 
-          {/* Contact Tab */}
-          <TabsContent value="contact" className="space-y-8">
-            <div>
-              <h3 className="text-2xl font-bold text-foreground mb-2">Implementation Roadmap</h3>
-              <p className="text-muted-foreground mb-6">
-                Follow these steps to pursue direct import from Westlake/ZC Rubber.
-              </p>
-            </div>
-
-            {/* Timeline */}
-            <div className="space-y-4">
-              {[
-                {
-                  week: 'Week 1-2',
-                  title: 'Initial Contact & Quotation',
-                  items: [
-                    'Send inquiry email to Westlake (kinson@zc-rubber.com)',
-                    'Request formal quotation for 1,000-1,200 units/year',
-                    'Ask for product samples and technical documentation',
-                    'Request factory pricing at $70-80 USD range'
-                  ]
-                },
-                {
-                  week: 'Week 3-4',
-                  title: 'Evaluation & Negotiation',
-                  items: [
-                    'Receive quotation and samples',
-                    'Conduct quality evaluation of samples',
-                    'Negotiate factory price and terms',
-                    'Discuss MOQ, lead times, payment terms'
-                  ]
-                },
-                {
-                  week: 'Month 2',
-                  title: 'Factory Audit & Pilot Order',
-                  items: [
-                    'Conduct factory audit (on-site or remote)',
-                    'Finalize quality requirements and specifications',
-                    'Place pilot order: 300-500 units',
-                    'Arrange shipping and insurance'
-                  ]
-                },
-                {
-                  week: 'Month 3-4',
-                  title: 'Pilot Validation',
-                  items: [
-                    'Receive and inspect pilot shipment',
-                    'Conduct quality testing and verification',
-                    'Test performance in field operations',
-                    'Evaluate supply chain and logistics'
-                  ]
-                },
-                {
-                  week: 'Month 5+',
-                  title: 'Scale-Up',
-                  items: [
-                    'Place full volume order (1,000+ units)',
-                    'Establish regular supply schedule',
-                    'Optimize inventory management',
-                    'Transition away from current supplier'
-                  ]
-                }
-              ].map((phase, idx) => (
-                <Card key={idx} className="p-6 card-elevated">
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                      {idx + 1}
-                    </div>
-                    <div className="flex-grow">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="text-lg font-semibold text-foreground">{phase.title}</h4>
-                        <span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-1 rounded">
-                          {phase.week}
-                        </span>
-                      </div>
-                      <ul className="space-y-2">
-                        {phase.items.map((item, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                            <ArrowRight className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
+          {/* Roadmap Tab */}
+          <TabsContent value="roadmap" className="space-y-6">
+            <Card className="p-8 card-elevated">
+              <h3 className="text-2xl font-bold text-foreground mb-6">10-Week Implementation Timeline</h3>
+              
+              <div className="space-y-6">
+                {/* Week 1 */}
+                <div className="flex gap-6">
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">1</div>
+                    <div className="w-1 h-20 bg-border mt-2"></div>
+                  </div>
+                  <div className="pb-6">
+                    <h4 className="font-semibold text-foreground mb-1">Week 1: Internal Alignment</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Stakeholder meeting (Finance, Fleet Manager). Send RFQs to Triangle and Aeolus with specific requirements.
+                    </p>
+                    <div className="bg-secondary p-3 rounded text-xs text-muted-foreground">
+                      Action: Use supplier outreach emails from research report
                     </div>
                   </div>
-                </Card>
-              ))}
-            </div>
+                </div>
 
-            {/* Contact Information */}
-            <Card className="p-8 card-elevated bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950">
-              <h4 className="text-xl font-semibold text-foreground mb-6">Westlake/ZC Rubber Contacts</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex gap-4">
-                  <Mail className="w-6 h-6 text-primary flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground mb-1">General Contact</p>
-                    <p className="text-sm text-muted-foreground">kinson@zc-rubber.com</p>
+                {/* Week 2 */}
+                <div className="flex gap-6">
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">2</div>
+                    <div className="w-1 h-20 bg-border mt-2"></div>
+                  </div>
+                  <div className="pb-6">
+                    <h4 className="font-semibold text-foreground mb-1">Week 2: Quotation & Verification</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Receive binding quotes. Verify GSO Conformity Certificates on GSO website. Select primary (Triangle) and secondary (Aeolus) suppliers.
+                    </p>
+                    <div className="bg-secondary p-3 rounded text-xs text-muted-foreground">
+                      Critical: Demand PDF copy of GSO certificate before proceeding
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <Phone className="w-6 h-6 text-primary flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground mb-1">Phone</p>
-                    <p className="text-sm text-muted-foreground">+86 571 8675 5920</p>
+
+                {/* Week 3 */}
+                <div className="flex gap-6">
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">3</div>
+                    <div className="w-1 h-20 bg-border mt-2"></div>
+                  </div>
+                  <div className="pb-6">
+                    <h4 className="font-semibold text-foreground mb-1">Week 3: Negotiation & PO</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Finalize pricing. Issue PO for pilot order (1x 40ft HC = 230 units). Open Irrevocable LC at Sight or send 30% deposit.
+                    </p>
+                    <div className="bg-secondary p-3 rounded text-xs text-muted-foreground">
+                      PO must state: "Loading Method: Normal Interlacing Only. No Doubling. No Pressing."
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <Mail className="w-6 h-6 text-primary flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground mb-1">Alternative Contact</p>
-                    <p className="text-sm text-muted-foreground">cuijianfei@zc-rubber.com</p>
+
+                {/* Weeks 4-8 */}
+                <div className="flex gap-6">
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">4-8</div>
+                    <div className="w-1 h-20 bg-border mt-2"></div>
+                  </div>
+                  <div className="pb-6">
+                    <h4 className="font-semibold text-foreground mb-1">Weeks 4-8: Production & Shipping</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Supplier manufactures. Freight forwarder arranges shipment from Qingdao or Shanghai. Transit time: ~30 days.
+                    </p>
+                    <div className="bg-secondary p-3 rounded text-xs text-muted-foreground">
+                      Monitor: GSO labels, commercial invoices, packing lists
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <Phone className="w-6 h-6 text-primary flex-shrink-0" />
+
+                {/* Week 9 */}
+                <div className="flex gap-6">
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">9</div>
+                    <div className="w-1 h-20 bg-border mt-2"></div>
+                  </div>
+                  <div className="pb-6">
+                    <h4 className="font-semibold text-foreground mb-1">Week 9: Arrival & Clearance</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Container arrives at Port of Sohar. Customs clearance (typically 2-3 days). HS Code: 4011.20.
+                    </p>
+                    <div className="bg-secondary p-3 rounded text-xs text-muted-foreground">
+                      Port handling: ~150 OMR. Clearance: ~100 OMR. Local transport: ~100 OMR
+                    </div>
+                  </div>
+                </div>
+
+                {/* Week 10 */}
+                <div className="flex gap-6">
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">10</div>
+                  </div>
                   <div>
-                    <p className="font-semibold text-foreground mb-1">Alternative Phone</p>
-                    <p className="text-sm text-muted-foreground">+86 571 8675 5919</p>
+                    <h4 className="font-semibold text-foreground mb-1">Week 10: Testing & Fitment</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Inspect tyres. Fit on pilot sub-fleet. Monitor CPK (Cost Per Kilometer) and performance over 2-4 weeks.
+                    </p>
+                    <div className="bg-secondary p-3 rounded text-xs text-muted-foreground">
+                      If pilot successful → Scale to 1,000-1,200 units/year
+                    </div>
                   </div>
                 </div>
               </div>
             </Card>
 
-            {/* CTA */}
-            <Card className="p-8 card-elevated border-2 border-primary">
-              <div className="flex items-start gap-4">
-                <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
+            {/* Key Contacts */}
+            <Card className="p-8 card-elevated">
+              <h3 className="text-2xl font-bold text-foreground mb-6">Supplier Contacts</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border-l-4 border-green-500 pl-4">
+                  <h4 className="font-semibold text-foreground mb-2">Triangle Tyre (Primary)</h4>
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    <p><strong>Email:</strong> exports@triangletire.cn</p>
+                    <p><strong>Models:</strong> TR668 (rib-lug), TR691 (drive-position)</p>
+                    <p><strong>Specs:</strong> 18-20 PR, 160K load index</p>
+                    <p><strong>Advantage:</strong> Fragmented distribution in Oman</p>
+                  </div>
+                </div>
+
+                <div className="border-l-4 border-blue-500 pl-4">
+                  <h4 className="font-semibold text-foreground mb-2">Aeolus Tyre (Secondary)</h4>
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    <p><strong>Email:</strong> export@aeolustype.com</p>
+                    <p><strong>Alt:</strong> aileen@aeolustype.biz</p>
+                    <p><strong>Models:</strong> HN08, HN25</p>
+                    <p><strong>Advantage:</strong> Heavy-duty specialist</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Risk Mitigation */}
+            <Card className="p-8 card-elevated bg-orange-50 dark:bg-orange-950 border-2 border-orange-500">
+              <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
+                <Shield className="w-6 h-6" />
+                Risk Mitigation Strategies
+              </h3>
+              
+              <div className="space-y-4">
                 <div>
-                  <h4 className="text-lg font-semibold text-foreground mb-2">Ready to Get Started?</h4>
-                  <p className="text-muted-foreground mb-4">
-                    Use the calculator above to test different scenarios and determine your optimal sourcing strategy. Then follow the implementation roadmap to contact Westlake and negotiate pricing.
+                  <h4 className="font-semibold text-foreground mb-2">Technical Homologation Risk</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Drivers may reject new brand due to handling differences.
                   </p>
-                  <Button className="button-primary">
-                    Back to Calculator
-                  </Button>
+                  <p className="text-sm font-medium text-foreground">
+                    Mitigation: Pilot phase with 230 units on specific sub-fleet. Involve fleet manager in brand selection.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">Warranty Defects</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Direct import means no local agent to call for blowouts.
+                  </p>
+                  <p className="text-sm font-medium text-foreground">
+                    Mitigation: 32 OMR savings per unit builds "buffer." If &lt;2% fail, savings cover replacements. Negotiate 1% "Spare Tyre Allowance" with supplier.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">Supply Chain Shock</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Red Sea attacks or port strikes could delay shipment by 3 weeks.
+                  </p>
+                  <p className="text-sm font-medium text-foreground">
+                    Mitigation: Increase safety stock from 2 weeks to 6 weeks. Maintain "emergency account" with Saud Bahwan for spot purchases.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">Bead Damage (Doubling)</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Traders may compress tyres to save freight, permanently deforming beads.
+                  </p>
+                  <p className="text-sm font-medium text-foreground">
+                    Mitigation: Explicitly ban doubling in PO. Require photographic proof of loading before releasing 70% balance payment.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">Customs Rejection</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Tyres may arrive without GSO labels or correct HS code.
+                  </p>
+                  <p className="text-sm font-medium text-foreground">
+                    Mitigation: Pre-shipment check mandatory. Verify GSO certs and label photos before shipment. Use freight forwarder experienced in GCC tyre imports.
+                  </p>
                 </div>
               </div>
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-card py-8 mt-12">
-        <div className="container text-center text-sm text-muted-foreground">
-          <p>HSC Tyre Sourcing Analysis • Exchange Rate: 1 OMR = 2.6 USD • Report Date: December 29, 2025</p>
+        {/* Footer */}
+        <div className="mt-12 pt-8 border-t border-border">
+          <p className="text-sm text-muted-foreground text-center">
+            <strong>Data Source:</strong> Verified Q4 2024 market research from deep supplier and logistics analysis. All pricing, shipping costs, and regulatory information have been cross-referenced with industry sources and supplier contacts.
+          </p>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
