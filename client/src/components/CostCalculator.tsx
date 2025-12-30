@@ -1,331 +1,419 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { AlertCircle, CheckCircle, TrendingDown } from 'lucide-react';
+import { useState, useMemo, useCallback } from 'react';
+import { Slider } from './Slider';
+import { 
+  calculateLandedCost, 
+  SUPPLIERS, 
+  CURRENT_PRICE_OMR,
+  formatOMR,
+  formatUSD,
+  formatK,
+  USD_TO_OMR_RATE,
+  type CostBreakdown,
+  type SupplierInfo 
+} from '@/lib/calculations';
+import { CheckCircle, AlertTriangle, Info, TrendingUp, Package, DollarSign } from 'lucide-react';
 
 interface CostCalculatorProps {
-  onUpdate?: (costs: any) => void;
+  onUpdate?: (costs: CostBreakdown) => void;
 }
 
+// Preset volume buttons
+const VOLUME_PRESETS = [
+  { label: '500', value: 500 },
+  { label: '1,000', value: 1000 },
+  { label: '1,200', value: 1200 },
+  { label: '1,500', value: 1500 },
+];
+
 export default function CostCalculator({ onUpdate }: CostCalculatorProps) {
-  // CORRECT EXCHANGE RATE: 1 USD = 0.385 OMR
-  const USD_TO_OMR_RATE = 0.385;
-  const OMR_TO_USD_RATE = 1 / USD_TO_OMR_RATE; // 1 OMR = 2.6 USD
-
-  // Current supplier price
-  const CURRENT_PRICE_OMR = 115;
-
-  // Verified logistics costs (from research report)
-  const OCEAN_FREIGHT_USD = 2500; // Per 40ft HC container
-  const CONTAINER_CAPACITY = 230; // Tyres per container
-  const CLEARANCE_HAULAGE_OMR = 250; // Total for entire container
-
-  // Verified supplier scenarios
-  const suppliers = [
-    {
-      name: 'Triangle Tyre (Recommended)',
-      model: 'TR668 / TR691',
-      fobMin: 175,
-      fobMax: 195,
-      warranty: 'Full Factory',
-      contact: 'exports@triangletire.cn',
-      advantage: 'Fragmented distribution, no monopolistic blocker',
-      risk: 'Low-Medium',
-      color: 'bg-green-50 dark:bg-green-950 border-green-500',
-    },
-    {
-      name: 'Aeolus Tyre',
-      model: 'HN08 / HN25',
-      fobMin: 180,
-      fobMax: 200,
-      warranty: 'Full Factory',
-      contact: 'export@aeolustype.com',
-      advantage: 'Heavy-duty specialist, overload capability',
-      risk: 'Low-Medium',
-      color: 'bg-blue-50 dark:bg-blue-950 border-blue-500',
-    },
-    {
-      name: 'Parallel Import (Westlake)',
-      model: 'CM998',
-      fobMin: 145,
-      fobMax: 165,
-      warranty: 'Void / None',
-      contact: 'Sinotyre, Maxplus, Qingdao Oriental',
-      advantage: 'Lowest price',
-      risk: 'High (Warranty void, bead damage risk)',
-      color: 'bg-red-50 dark:bg-red-950 border-red-500',
-    },
-  ];
-
-  const [selectedSupplier, setSelectedSupplier] = useState(0);
-  const handleSupplierChange = useCallback((index: number) => {
-    setSelectedSupplier(index);
-    const supplier = suppliers[index];
-    setFactoryPriceUSD((supplier.fobMin + supplier.fobMax) / 2);
-  }, []);
-  const [factoryPriceUSD, setFactoryPriceUSD] = useState(
-    (suppliers[0].fobMin + suppliers[0].fobMax) / 2
-  );
+  const [selectedSupplierIndex, setSelectedSupplierIndex] = useState(0);
+  const [factoryPriceUSD, setFactoryPriceUSD] = useState(180); // Default to reference price
   const [annualVolume, setAnnualVolume] = useState(1000);
-
-  // Calculate landed cost - EXACT FORMULA FROM RESEARCH REPORT
-  const calculateLandedCost = (fobUSD: number, volume: number) => {
-    // Step 1: Calculate CIF in USD
-    const insuranceUSD = fobUSD * 0.01; // 1% of FOB
-    const oceanFreightPerTyreUSD = OCEAN_FREIGHT_USD / CONTAINER_CAPACITY;
-    const cifUSD = fobUSD + insuranceUSD + oceanFreightPerTyreUSD;
-
-    // Step 2: Convert CIF to OMR
-    const cifOMR = cifUSD * USD_TO_OMR_RATE;
-
-    // Step 3: Calculate Customs Duty (5% on CIF in OMR)
-    const customsDutyOMR = cifOMR * 0.05;
-
-    // Step 4: Calculate Clearance & Haulage per tyre
-    const clearancePerTyreOMR = CLEARANCE_HAULAGE_OMR / CONTAINER_CAPACITY;
-
-    // Step 5: Calculate Subtotal (Pre-VAT)
-    const subtotalOMR = cifOMR + customsDutyOMR + clearancePerTyreOMR;
-
-    // Step 6: Calculate VAT (5% on Subtotal)
-    const vatOMR = subtotalOMR * 0.05;
-
-    // Step 7: Final Landed Cost
-    const totalLandedCostOMR = subtotalOMR + vatOMR;
-
-    // Step 8: Calculate savings
-    const savingsPerTyreOMR = CURRENT_PRICE_OMR - totalLandedCostOMR;
-
-    return {
-      // Components for display
-      fobUSD,
-      fobOMR: fobUSD * USD_TO_OMR_RATE,
-      insuranceUSD,
-      insuranceOMR: insuranceUSD * USD_TO_OMR_RATE,
-      oceanFreightUSD: oceanFreightPerTyreUSD,
-      oceanFreightOMR: oceanFreightPerTyreUSD * USD_TO_OMR_RATE,
-      cifUSD,
-      cifOMR,
-      customsDutyOMR,
-      clearanceOMR: clearancePerTyreOMR,
-      subtotalOMR,
-      vatOMR,
-
-      // Total landed cost
-      totalLandedCostOMR,
-      totalLandedCostUSD: totalLandedCostOMR * OMR_TO_USD_RATE,
-
-      // Savings
-      savingsPerTyreOMR,
-      savingsPerTyreUSD: savingsPerTyreOMR * OMR_TO_USD_RATE,
-      annualSavingsOMR: savingsPerTyreOMR * volume,
-      annualSavingsUSD: (savingsPerTyreOMR * OMR_TO_USD_RATE) * volume,
-    };
-  };
-
-  const costs = useMemo(() => calculateLandedCost(factoryPriceUSD, annualVolume), [factoryPriceUSD, annualVolume]);
-
-  // Update parent component when costs change
-  useEffect(() => {
-    if (onUpdate) {
-      onUpdate({
-        fobOMR: costs.fobOMR,
-        insuranceOMR: costs.insuranceOMR,
-        shippingOMR: costs.oceanFreightOMR,
-        customsDutyOMR: costs.customsDutyOMR,
-        vatOMR: costs.vatOMR,
-        handlingOMR: costs.clearanceOMR,
-      });
+  
+  const selectedSupplier = SUPPLIERS[selectedSupplierIndex];
+  
+  // Memoized cost calculation
+  const costs = useMemo(() => {
+    const result = calculateLandedCost(factoryPriceUSD, annualVolume);
+    onUpdate?.(result);
+    return result;
+  }, [factoryPriceUSD, annualVolume, onUpdate]);
+  
+  // Handle supplier change
+  const handleSupplierChange = useCallback((index: number) => {
+    setSelectedSupplierIndex(index);
+    const supplier = SUPPLIERS[index];
+    // Set to midpoint of supplier's FOB range
+    setFactoryPriceUSD(Math.round((supplier.fobMin + supplier.fobMax) / 2));
+  }, []);
+  
+  // Handle FOB price input
+  const handleFobInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value) && value >= selectedSupplier.fobMin && value <= selectedSupplier.fobMax) {
+      setFactoryPriceUSD(value);
     }
-  }, [costs.fobOMR, costs.insuranceOMR, costs.oceanFreightOMR, costs.customsDutyOMR, costs.vatOMR, costs.clearanceOMR, onUpdate]);
-
+  }, [selectedSupplier]);
+  
+  // Handle volume input
+  const handleVolumeInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 100 && value <= 2500) {
+      setAnnualVolume(value);
+    }
+  }, []);
+  
   return (
     <div className="space-y-6">
+      {/* Key Metrics Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="card p-5 border-l-4 border-l-[#059669]">
+          <div className="flex items-center gap-2 mb-2">
+            <DollarSign className="w-5 h-5 text-[#059669]" />
+            <span className="text-sm font-medium text-gray-500">Landed Cost</span>
+          </div>
+          <div className="number-display text-3xl font-bold text-[#059669]">
+            {formatOMR(costs.totalLandedCostOMR)} <span className="text-lg font-normal">OMR</span>
+          </div>
+          <div className="text-sm text-gray-500 mt-1">
+            vs. {CURRENT_PRICE_OMR} OMR current
+          </div>
+        </div>
+        
+        <div className="card p-5 border-l-4 border-l-[#3d7ea6]">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="w-5 h-5 text-[#3d7ea6]" />
+            <span className="text-sm font-medium text-gray-500">Savings Per Tyre</span>
+          </div>
+          <div className="number-display text-3xl font-bold text-[#3d7ea6]">
+            {formatOMR(costs.savingsPerTyreOMR)} <span className="text-lg font-normal">OMR</span>
+          </div>
+          <div className="text-sm text-gray-500 mt-1">
+            {costs.savingsPercentage.toFixed(1)}% reduction
+          </div>
+        </div>
+        
+        <div className="card p-5 border-l-4 border-l-[#1e3a5f]">
+          <div className="flex items-center gap-2 mb-2">
+            <Package className="w-5 h-5 text-[#1e3a5f]" />
+            <span className="text-sm font-medium text-gray-500">Annual Savings</span>
+          </div>
+          <div className="number-display text-3xl font-bold text-[#1e3a5f]">
+            {formatK(costs.annualSavingsOMR)} <span className="text-lg font-normal">OMR</span>
+          </div>
+          <div className="text-sm text-gray-500 mt-1">
+            ${formatK(costs.annualSavingsUSD)} USD at {annualVolume.toLocaleString()} units
+          </div>
+        </div>
+      </div>
+      
       {/* Supplier Selection */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-bold text-foreground mb-4">Select Supplier Strategy</h3>
+      <div className="card-elevated p-6">
+        <h3 className="text-xl font-bold mb-4">Select Supplier Strategy</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {suppliers.map((supplier, idx) => (
+          {SUPPLIERS.map((supplier, idx) => (
             <button
-              key={idx}
-              onClick={() => {
-                setSelectedSupplier(idx);
-                setFactoryPriceUSD((supplier.fobMin + supplier.fobMax) / 2);
-              }}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                selectedSupplier === idx
-                  ? supplier.color + ' border-current'
-                  : 'border-border hover:border-primary'
+              key={supplier.id}
+              onClick={() => handleSupplierChange(idx)}
+              className={`p-4 rounded-xl border-2 transition-all text-left ${
+                selectedSupplierIndex === idx
+                  ? `border-[${supplier.borderColor}] bg-[${supplier.bgColor}] shadow-md`
+                  : 'border-gray-200 hover:border-gray-300 bg-white'
               }`}
+              style={{
+                borderColor: selectedSupplierIndex === idx ? supplier.borderColor : undefined,
+                backgroundColor: selectedSupplierIndex === idx ? supplier.bgColor : undefined,
+              }}
             >
-              <h4 className="font-bold text-foreground text-left">{supplier.name}</h4>
-              <p className="text-sm text-muted-foreground text-left mt-2">{supplier.model}</p>
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-bold text-gray-900">{supplier.name}</h4>
+                {supplier.riskLevel === 'high' ? (
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                ) : (
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                )}
+              </div>
+              <p className="text-sm text-gray-600 mb-2">{supplier.model}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                  ${supplier.fobMin}-${supplier.fobMax} FOB
+                </span>
+                <span 
+                  className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                    supplier.riskLevel === 'high' 
+                      ? 'bg-red-100 text-red-700' 
+                      : 'bg-green-100 text-green-700'
+                  }`}
+                >
+                  {supplier.riskLabel}
+                </span>
+              </div>
             </button>
           ))}
         </div>
       </div>
-
-      {/* Price Adjustment */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-bold text-foreground mb-4">Adjust Factory Price</h3>
-        <div className="space-y-4">
+      
+      {/* Calculator Controls */}
+      <div className="card-elevated p-6">
+        <h3 className="text-xl font-bold mb-6">Adjust Parameters</h3>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* FOB Price Control */}
           <div>
-            <label className="text-sm font-medium text-foreground">
-              Factory Price (FOB): ${factoryPriceUSD.toFixed(2)} USD
-            </label>
+            <div className="flex items-center justify-between mb-3">
+              <label className="font-semibold text-gray-700">Factory Price (FOB)</label>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-[#3d7ea6] number-display">
+                  ${factoryPriceUSD}
+                </span>
+                <span className="text-gray-500">USD</span>
+              </div>
+            </div>
+            
             <Slider
               value={[factoryPriceUSD]}
               onValueChange={(value) => setFactoryPriceUSD(value[0])}
-              min={suppliers[selectedSupplier].fobMin}
-              max={suppliers[selectedSupplier].fobMax}
+              min={selectedSupplier.fobMin}
+              max={selectedSupplier.fobMax}
               step={1}
-              className="mt-2"
+              className="mb-3"
             />
-            <p className="text-xs text-muted-foreground mt-2">
-              Range: ${suppliers[selectedSupplier].fobMin} - ${suppliers[selectedSupplier].fobMax}
-            </p>
+            
+            <div className="flex items-center justify-between text-sm text-gray-500">
+              <span>${selectedSupplier.fobMin} (Budget)</span>
+              <span>${selectedSupplier.fobMax} (Premium)</span>
+            </div>
+            
+            <div className="mt-4 flex items-center gap-2">
+              <label className="text-sm text-gray-600">Exact value:</label>
+              <input
+                type="number"
+                value={factoryPriceUSD}
+                onChange={handleFobInput}
+                min={selectedSupplier.fobMin}
+                max={selectedSupplier.fobMax}
+                className="w-24 px-3 py-1.5 text-sm border-2 border-gray-200 rounded-lg focus:border-[#3d7ea6] focus:outline-none number-display"
+              />
+              <span className="text-sm text-gray-500">USD</span>
+            </div>
           </div>
-
+          
+          {/* Volume Control */}
           <div>
-            <label className="text-sm font-medium text-foreground">
-              Annual Volume: {annualVolume.toLocaleString()} units
-            </label>
+            <div className="flex items-center justify-between mb-3">
+              <label className="font-semibold text-gray-700">Annual Volume</label>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-[#1e3a5f] number-display">
+                  {annualVolume.toLocaleString()}
+                </span>
+                <span className="text-gray-500">units</span>
+              </div>
+            </div>
+            
             <Slider
               value={[annualVolume]}
               onValueChange={(value) => setAnnualVolume(value[0])}
-              min={300}
-              max={2000}
-              step={100}
-              className="mt-2"
+              min={100}
+              max={2500}
+              step={50}
+              className="mb-3"
             />
+            
+            <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+              <span>100 units</span>
+              <span>2,500 units</span>
+            </div>
+            
+            {/* Preset Buttons */}
+            <div className="flex flex-wrap gap-2">
+              {VOLUME_PRESETS.map((preset) => (
+                <button
+                  key={preset.value}
+                  onClick={() => setAnnualVolume(preset.value)}
+                  className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                    annualVolume === preset.value
+                      ? 'bg-[#1e3a5f] text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-
+      
       {/* Cost Breakdown */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-bold text-foreground mb-6">Cost Breakdown (Per Tyre)</h3>
-
-        <div className="space-y-3">
-          <div className="flex justify-between items-center py-2 border-b border-border">
-            <span className="text-foreground">FOB Price</span>
-            <span className="font-semibold">${costs.fobUSD.toFixed(2)} / {costs.fobOMR.toFixed(2)} OMR</span>
+      <div className="card-elevated p-6">
+        <h3 className="text-xl font-bold mb-6">Cost Breakdown (Per Tyre)</h3>
+        
+        <div className="space-y-1">
+          <CostRow 
+            label="FOB Price" 
+            valueOMR={costs.fobOMR} 
+            valueUSD={costs.fobUSD}
+            showUSD 
+          />
+          <CostRow 
+            label="Insurance (1% of FOB)" 
+            valueOMR={costs.insuranceOMR} 
+            valueUSD={costs.insuranceUSD}
+            showUSD 
+          />
+          <CostRow 
+            label="Ocean Freight" 
+            valueOMR={costs.oceanFreightOMR} 
+            valueUSD={costs.oceanFreightUSD}
+            showUSD 
+          />
+          <CostRow 
+            label="CIF Value" 
+            valueOMR={costs.cifOMR} 
+            valueUSD={costs.cifUSD}
+            highlight 
+            showUSD 
+          />
+          <CostRow 
+            label="Customs Duty (5%)" 
+            valueOMR={costs.customsDutyOMR} 
+          />
+          <CostRow 
+            label="Clearance & Haulage" 
+            valueOMR={costs.clearanceOMR} 
+          />
+          <CostRow 
+            label="Subtotal (Pre-VAT)" 
+            valueOMR={costs.subtotalOMR} 
+            highlight 
+          />
+          <CostRow 
+            label="VAT (5%)" 
+            valueOMR={costs.vatOMR} 
+          />
+          
+          {/* Total */}
+          <div className="cost-row total mt-4">
+            <span className="font-bold">Total Landed Cost</span>
+            <div className="text-right">
+              <span className="text-2xl font-bold number-display">
+                {formatOMR(costs.totalLandedCostOMR)} OMR
+              </span>
+              <div className="text-sm opacity-80">
+                ${formatUSD(costs.totalLandedCostUSD)} USD
+              </div>
+            </div>
           </div>
-
-          <div className="flex justify-between items-center py-2 border-b border-border">
-            <span className="text-foreground">Insurance (1%)</span>
-            <span className="font-semibold">${costs.insuranceUSD.toFixed(2)} / {costs.insuranceOMR.toFixed(2)} OMR</span>
-          </div>
-
-          <div className="flex justify-between items-center py-2 border-b border-border">
-            <span className="text-foreground">Ocean Freight</span>
-            <span className="font-semibold">${costs.oceanFreightUSD.toFixed(2)} / {costs.oceanFreightOMR.toFixed(2)} OMR</span>
-          </div>
-
-          <div className="flex justify-between items-center py-2 border-b border-border bg-slate-50 dark:bg-slate-700 px-3 rounded">
-            <span className="text-foreground font-medium">CIF Value</span>
-            <span className="font-bold">${costs.cifUSD.toFixed(2)} / {costs.cifOMR.toFixed(2)} OMR</span>
-          </div>
-
-          <div className="flex justify-between items-center py-2 border-b border-border">
-            <span className="text-foreground">Customs Duty (5%)</span>
-            <span className="font-semibold">{costs.customsDutyOMR.toFixed(2)} OMR</span>
-          </div>
-
-          <div className="flex justify-between items-center py-2 border-b border-border">
-            <span className="text-foreground">Clearance & Haulage</span>
-            <span className="font-semibold">{costs.clearanceOMR.toFixed(2)} OMR</span>
-          </div>
-
-          <div className="flex justify-between items-center py-2 border-b border-border bg-slate-50 dark:bg-slate-700 px-3 rounded">
-            <span className="text-foreground font-medium">Subtotal (Pre-VAT)</span>
-            <span className="font-bold">{costs.subtotalOMR.toFixed(2)} OMR</span>
-          </div>
-
-          <div className="flex justify-between items-center py-2 border-b border-border">
-            <span className="text-foreground">VAT (5%)</span>
-            <span className="font-semibold">{costs.vatOMR.toFixed(2)} OMR</span>
-          </div>
-
-          <div className="flex justify-between items-center py-3 bg-blue-50 dark:bg-blue-950 px-4 rounded-lg border-2 border-blue-500">
-            <span className="text-foreground font-bold">Total Landed Cost</span>
-            <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-              {costs.totalLandedCostOMR.toFixed(2)} OMR / ${costs.totalLandedCostUSD.toFixed(2)}
-            </span>
+        </div>
+        
+        {/* Verification Note */}
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex items-start gap-3">
+            <Info className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-gray-600">
+              <strong>Verified Data:</strong> Exchange rate 1 USD = {USD_TO_OMR_RATE} OMR. 
+              Container capacity: 230 tyres. Freight: $2,500/container. 
+              Based on Q4 2024 market research.
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Savings Analysis */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-bold text-foreground mb-6">Profitability Analysis</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-green-50 dark:bg-green-950 border-2 border-green-500 p-4 rounded-lg">
-            <p className="text-sm text-muted-foreground mb-2">Savings vs Current (115 OMR)</p>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-              {costs.savingsPerTyreOMR.toFixed(2)} OMR
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              ${costs.savingsPerTyreUSD.toFixed(2)} USD per tyre
-            </p>
-          </div>
-
-          <div className="bg-blue-50 dark:bg-blue-950 border-2 border-blue-500 p-4 rounded-lg">
-            <p className="text-sm text-muted-foreground mb-2">Annual Savings</p>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              {(costs.annualSavingsOMR / 1000).toFixed(1)}K OMR
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              ${(costs.annualSavingsUSD / 1000).toFixed(1)}K USD at {annualVolume.toLocaleString()} units/year
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Risk Assessment */}
-      <div className={`p-6 rounded-lg border-2 ${suppliers[selectedSupplier].color}`}>
-        <div className="flex items-start gap-3">
-          {suppliers[selectedSupplier].risk.includes('High') ? (
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-1" />
+      
+      {/* Supplier Details */}
+      <div 
+        className="card-elevated p-6 border-l-4"
+        style={{ borderLeftColor: selectedSupplier.borderColor }}
+      >
+        <div className="flex items-start gap-4">
+          {selectedSupplier.riskLevel === 'high' ? (
+            <AlertTriangle className="w-8 h-8 text-red-500 flex-shrink-0" />
           ) : (
-            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+            <CheckCircle className="w-8 h-8 text-green-500 flex-shrink-0" />
           )}
-          <div>
-            <h4 className="font-bold text-foreground mb-2">
-              {suppliers[selectedSupplier].name}
-            </h4>
-            <div className="grid grid-cols-2 gap-4 mb-4">
+          
+          <div className="flex-1">
+            <h4 className="text-xl font-bold mb-1">{selectedSupplier.name}</h4>
+            <p className="text-gray-600 mb-4">{selectedSupplier.description}</p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div>
-                <p className="text-xs text-muted-foreground">Model</p>
-                <p className="font-semibold text-foreground">{suppliers[selectedSupplier].model}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Model</p>
+                <p className="font-semibold">{selectedSupplier.model}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Warranty</p>
-                <p className="font-semibold text-foreground">{suppliers[selectedSupplier].warranty}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Warranty</p>
+                <p className={`font-semibold ${selectedSupplier.riskLevel === 'high' ? 'text-red-600' : ''}`}>
+                  {selectedSupplier.warranty}
+                </p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Risk Level</p>
-                <p className="font-semibold text-foreground">{suppliers[selectedSupplier].risk}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Contact</p>
+                <p className="font-semibold text-sm">{selectedSupplier.email}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Contact</p>
-                <p className="font-semibold text-foreground text-sm">{suppliers[selectedSupplier].contact}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Risk Level</p>
+                <span 
+                  className={`risk-badge ${
+                    selectedSupplier.riskLevel === 'high' ? 'high' : 
+                    selectedSupplier.riskLevel === 'medium' ? 'medium' : 'low'
+                  }`}
+                >
+                  {selectedSupplier.riskLabel}
+                </span>
               </div>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Key Advantage</p>
-              <p className="font-semibold text-foreground">{suppliers[selectedSupplier].advantage}</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h5 className="font-semibold text-green-700 mb-2">Advantages</h5>
+                <ul className="space-y-1">
+                  {selectedSupplier.advantages.map((adv, idx) => (
+                    <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
+                      <span className="text-green-500 font-bold">+</span>
+                      {adv}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h5 className="font-semibold text-red-700 mb-2">Considerations</h5>
+                <ul className="space-y-1">
+                  {selectedSupplier.disadvantages.map((dis, idx) => (
+                    <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
+                      <span className="text-red-500 font-bold">-</span>
+                      {dis}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Data Source Note */}
-      <div className="bg-slate-100 dark:bg-slate-900 p-4 rounded-lg border-l-4 border-slate-400">
-        <p className="text-sm text-muted-foreground">
-          Data Source: All pricing, shipping costs, and logistics data are verified from Q4 2024 market research. Exchange Rate: 1 USD = 0.385 OMR
-        </p>
+// Helper component for cost rows
+interface CostRowProps {
+  label: string;
+  valueOMR: number;
+  valueUSD?: number;
+  highlight?: boolean;
+  showUSD?: boolean;
+}
+
+function CostRow({ label, valueOMR, valueUSD, highlight, showUSD }: CostRowProps) {
+  return (
+    <div className={`cost-row ${highlight ? 'highlight' : ''}`}>
+      <span className="text-gray-700">{label}</span>
+      <div className="text-right">
+        <span className="font-semibold number-display">{formatOMR(valueOMR)} OMR</span>
+        {showUSD && valueUSD !== undefined && (
+          <span className="text-sm text-gray-500 ml-2">
+            (${formatUSD(valueUSD)})
+          </span>
+        )}
       </div>
     </div>
   );
