@@ -6,16 +6,11 @@ import ScenarioComparisonChart from '@/components/ScenarioComparisonChart';
 import ProfitabilityHeatmap from '@/components/ProfitabilityHeatmap';
 import { SupplierGallery } from '@/components/SupplierDetailModal';
 import LegalAndQualityInfo from '@/components/LegalAndQualityInfo';
+import ImplementationRoadmap from '@/components/ImplementationRoadmap';
+import { type CostBreakdown } from '@/lib/calculations';
 
 export default function Home() {
-  const [selectedSupplierData, setSelectedSupplierData] = useState({
-    fobOMR: 71.23,
-    insuranceOMR: 0.71,
-    shippingOMR: 4.18,
-    customsDutyOMR: 3.60,
-    vatOMR: 3.78,
-    handlingOMR: 1.09,
-  });
+  const [selectedSupplierData, setSelectedSupplierData] = useState<CostBreakdown | null>(null);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800">
@@ -78,7 +73,7 @@ export default function Home() {
           {/* Calculator Tab */}
           <TabsContent value="calculator" className="space-y-6">
             <CostCalculator onUpdate={setSelectedSupplierData} />
-            <CostBreakdownChart {...selectedSupplierData} />
+            {selectedSupplierData && <CostBreakdownChart costs={selectedSupplierData} />}
           </TabsContent>
 
           {/* Analysis Tab */}
@@ -96,6 +91,16 @@ export default function Home() {
               </p>
               <SupplierGallery />
             </div>
+          </TabsContent>
+
+          {/* Roadmap Tab */}
+          <TabsContent value="roadmap" className="space-y-6">
+            <ImplementationRoadmap />
+          </TabsContent>
+
+          {/* Legal & Quality Tab */}
+          <TabsContent value="legal" className="space-y-6">
+            <LegalAndQualityInfo />
           </TabsContent>
 
           {/* Roadmap Tab */}
