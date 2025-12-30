@@ -9,24 +9,13 @@ import LegalAndQualityInfo from '@/components/LegalAndQualityInfo';
 
 export default function Home() {
   const [selectedSupplierData, setSelectedSupplierData] = useState({
-    fobOMR: 67.38,
-    insuranceOMR: 0.67,
+    fobOMR: 71.23,
+    insuranceOMR: 0.71,
     shippingOMR: 4.18,
-    customsDutyOMR: 3.63,
-    vatOMR: 3.81,
-    handlingOMR: 1.33,
+    customsDutyOMR: 3.60,
+    vatOMR: 3.78,
+    handlingOMR: 1.09,
   });
-
-  const handleCalculatorUpdate = (costs: any) => {
-    setSelectedSupplierData({
-      fobOMR: costs.fobOMR,
-      insuranceOMR: costs.insuranceOMR,
-      shippingOMR: costs.shippingOMR,
-      customsDutyOMR: costs.customsDutyOMR,
-      vatOMR: costs.vatOMR,
-      handlingOMR: costs.portHandlingOMR + costs.clearanceOMR + costs.transportOMR,
-    });
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800">
@@ -88,7 +77,7 @@ export default function Home() {
 
           {/* Calculator Tab */}
           <TabsContent value="calculator" className="space-y-6">
-            <CostCalculator />
+            <CostCalculator onUpdate={setSelectedSupplierData} />
             <CostBreakdownChart {...selectedSupplierData} />
           </TabsContent>
 

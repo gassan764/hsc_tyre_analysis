@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { AlertCircle, CheckCircle, TrendingDown } from 'lucide-react';
 
-export default function CostCalculator() {
+interface CostCalculatorProps {
+  onUpdate?: (costs: any) => void;
+}
+
+export default function CostCalculator({ onUpdate }: CostCalculatorProps) {
   // CORRECT EXCHANGE RATE: 1 USD = 0.385 OMR
   const USD_TO_OMR_RATE = 0.385;
   const OMR_TO_USD_RATE = 1 / USD_TO_OMR_RATE; // 1 OMR = 2.6 USD
@@ -115,6 +119,20 @@ export default function CostCalculator() {
   };
 
   const costs = calculateLandedCost(factoryPriceUSD, annualVolume);
+
+  // Update parent component when costs change
+  useEffect(() => {
+    if (onUpdate) {
+      onUpdate({
+        fobOMR: costs.fobOMR,
+        insuranceOMR: costs.insuranceOMR,
+        shippingOMR: costs.shippingOMR,
+        customsDutyOMR: costs.customsDutyOMR,
+        vatOMR: costs.vatOMR,
+        handlingOMR: costs.clearanceOMR,
+      });
+    }
+  }, [costs, onUpdate]);
 
   return (
     <div className="space-y-6">
