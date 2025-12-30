@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Slider } from './Slider';
 import { 
   calculateLandedCost, 
@@ -34,10 +34,13 @@ export default function CostCalculator({ onUpdate }: CostCalculatorProps) {
   
   // Memoized cost calculation
   const costs = useMemo(() => {
-    const result = calculateLandedCost(factoryPriceUSD, annualVolume);
-    onUpdate?.(result);
-    return result;
-  }, [factoryPriceUSD, annualVolume, onUpdate]);
+    return calculateLandedCost(factoryPriceUSD, annualVolume);
+  }, [factoryPriceUSD, annualVolume]);
+  
+  // Update parent component when costs change
+  useEffect(() => {
+    onUpdate?.(costs);
+  }, [costs, onUpdate]);
   
   // Handle supplier change
   const handleSupplierChange = useCallback((index: number) => {
