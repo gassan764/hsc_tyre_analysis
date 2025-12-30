@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { AlertCircle, CheckCircle, TrendingDown } from 'lucide-react';
@@ -58,6 +58,11 @@ export default function CostCalculator({ onUpdate }: CostCalculatorProps) {
   ];
 
   const [selectedSupplier, setSelectedSupplier] = useState(0);
+  const handleSupplierChange = useCallback((index: number) => {
+    setSelectedSupplier(index);
+    const supplier = suppliers[index];
+    setFactoryPriceUSD((supplier.fobMin + supplier.fobMax) / 2);
+  }, []);
   const [factoryPriceUSD, setFactoryPriceUSD] = useState(
     (suppliers[0].fobMin + suppliers[0].fobMax) / 2
   );
@@ -118,7 +123,7 @@ export default function CostCalculator({ onUpdate }: CostCalculatorProps) {
     };
   };
 
-  const costs = calculateLandedCost(factoryPriceUSD, annualVolume);
+  const costs = useMemo(() => calculateLandedCost(factoryPriceUSD, annualVolume), [factoryPriceUSD, annualVolume]);
 
   // Update parent component when costs change
   useEffect(() => {
@@ -126,13 +131,13 @@ export default function CostCalculator({ onUpdate }: CostCalculatorProps) {
       onUpdate({
         fobOMR: costs.fobOMR,
         insuranceOMR: costs.insuranceOMR,
-        shippingOMR: costs.shippingOMR,
+        shippingOMR: costs.oceanFreightOMR,
         customsDutyOMR: costs.customsDutyOMR,
         vatOMR: costs.vatOMR,
         handlingOMR: costs.clearanceOMR,
       });
     }
-  }, [costs, onUpdate]);
+  }, [costs.fobOMR, costs.insuranceOMR, costs.oceanFreightOMR, costs.customsDutyOMR, costs.vatOMR, costs.clearanceOMR, onUpdate]);
 
   return (
     <div className="space-y-6">
